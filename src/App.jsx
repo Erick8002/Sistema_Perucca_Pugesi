@@ -3,7 +3,7 @@ import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KpiCards from './components/KpiCards';
 import TransactionsTable from './components/TransactionsTable';
-import ActionButtons from './components/ActionButtons';
+import RelatoryButtons from './components/RelatoryButtons';
 import PastelCards from './components/PastelCards';
 import ChartsSection from './components/ChartsSection';
 
@@ -17,7 +17,7 @@ export default function App() {
           <Header />
           <KpiCards />
           <TransactionsTable /> 
-          <ActionButtons />
+          <RelatoryButtons />
           <PastelCards />
           <ChartsSection />
         </div>
