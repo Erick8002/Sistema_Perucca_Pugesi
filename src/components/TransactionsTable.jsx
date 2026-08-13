@@ -1,20 +1,25 @@
 import React, { useState } from 'react';
+import CustomSelect from './CustomSelect';
 import { Search, MoreHorizontal, FileText, Printer, Plus, Edit3 } from 'lucide-react';
+
+const categoryOptions = ['Todas as Categorias', 'Fertilizantes', 'Defensivos', 'Sementes'];
 
 export default function TransactionsTable() {
   const [openDropdown, setOpenDropdown] = useState(null);
+  const [category, setCategory] = useState('Fertilizantes');
 
   const transactions = [
     { id: 1, vencimento: '08/08/2026', fornecedor: 'Agrofértil Insumos', categoria: 'Fertilizantes & Adubos', valor: 'R$ 4.500,00', status: 'Pago' },
     { id: 2, vencimento: '10/08/2026', fornecedor: 'MaqCampo Peças e Manutenção', categoria: 'Manutenção de Maquinário', valor: 'R$ 1.580,00', status: 'Pendente' },
+    { id: 3, vencimento: '19/08/2026', fornecedor: 'xxxxxxxx', categoria: 'xxxxxxxxxxxx', valor: 'R$ X.XXX,XX', status: 'Pendente'}
   ];
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <h2 className="text-base font-bold text-gray-800">Todos os Gastos do Mês</h2>
+        <h2 className="text-base font-bold text-gray-800 ">Todos os Gastos do Mês</h2>
 
-        <div className="flex items-center gap-2 flex-1 max-w-xl">
+        <div className="flex items-center gap-2 flex-1 max-w-3xl">
           <div className="relative flex-1">
             <input
               type="text"
@@ -24,9 +29,13 @@ export default function TransactionsTable() {
             <Search className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-2" />
           </div>
 
-          <select className="bg-gray-50 border border-gray-200 rounded-md px-2 py-1.5 text-xs text-gray-600">
-            <option>Todas as Categorias</option>
-          </select>
+          <div className="p-2">
+            <CustomSelect
+              options = {categoryOptions}
+              selected = {category}
+              onSelect = {setCategory}
+            />
+          </div>
 
           <button className="bg-[#4A2E56] hover:bg-[#382242] text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0">
             <Plus className="w-3.5 h-3.5" /> Novo Gasto
@@ -34,7 +43,7 @@ export default function TransactionsTable() {
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-gray-500 pt-1">
+      <div className="flex items-center gap-3 text-xs text-gray-500">
         <select className="bg-white border border-gray-200 rounded px-2 py-1">
           <option>Agosto</option>
         </select>
