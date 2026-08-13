@@ -1,4 +1,4 @@
-# FinDash - Dashboard Financeiro Empresarial
+# PeruccaPugesi - Dashboard Financeiro Empresarial
 
 Um dashboard financeiro moderno e responsivo construído com React, Vite e Tailwind CSS.
 
