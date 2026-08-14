@@ -11,9 +11,9 @@ export default function TransactionsTable() {
   const [monthTableFilter, setMonthTableFilter] = useState('Agosto');
 
   const transactions = [
-    { id: 1, vencimento: '08/08/2026', fornecedor: 'Agrofértil Insumos', categoria: 'Fertilizantes', valor: 'R$ 4.500,00', status: 'Pago' },
-    { id: 2, vencimento: '10/08/2026', fornecedor: 'MaqCampo Peças e Manutenção', categoria: 'Defensivos', valor: 'R$ 1.580,00', status: 'Pendente' },
-    { id: 3, vencimento: '19/08/2026', fornecedor: 'Sementes AgroTech', categoria: 'Sementes', valor: 'R$ 2.300,00', status: 'Pendente'}
+    { id: 1, vencimento: '2026-08-08', fornecedor: 'Agrofértil Insumos', categoria: 'Fertilizantes', valor: 'R$ 4.500,00', status: 'Pago' },
+    { id: 2, vencimento: '2026-08-10', fornecedor: 'MaqCampo Peças e Manutenção', categoria: 'Defensivos', valor: 'R$ 1.580,00', status: 'Pendente' },
+    { id: 3, vencimento: '2026-08-19', fornecedor: 'Sementes AgroTech', categoria: 'Sementes', valor: 'R$ 2.300,00', status: 'Pendente'}
   ];
 
   const filteredTransactions = transactions.filter((item) => {
@@ -29,6 +29,26 @@ export default function TransactionsTable() {
     Pendente: 'bg-amber-100 text-amber-700',
     Atrasado: 'bg-rose-100 text-rose-700',
   };
+
+  const getTransactionStatus = (item) => {
+    if (item.status === 'Pago') return 'Pago';
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); //Setando a hr, min, seg e ms para zero para ele fazer um comparativo apenas das datas
+
+    const [year, month, day] = item.vencimento.split('-'); // Utilizando o split('/') para tirar a barra do texto e guardar apenas o número da data
+    const dueDate = new Date(year, month -1, day); // criando o objeto da data de vencimento, o "month-1" pois o js conta os meses do (0)
+
+    console.log("Data do item:", item.vencimento, "=> Convertida para:", dueDate);
+
+    if(dueDate < today){
+      return 'Atrasado';
+    } 
+    
+    return 'Pendente';
+  }
+
+  const currentMonthName = monthOptions[new Date().getMonth()];
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
@@ -65,6 +85,7 @@ export default function TransactionsTable() {
             options = {monthOptions}
             selected = {monthTableFilter}
             onSelect = {setMonthTableFilter}
+            currentOption = {currentMonthName}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -86,17 +107,22 @@ export default function TransactionsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 text-gray-700">
-            {filteredTransactions.map((item) => (
+            {filteredTransactions.map((item) => {
+              const currentStatus = getTransactionStatus(item);
+
+              return (
               <tr key={item.id} className="hover:bg-gray-50/50">
-                <td className="py-3">{item.vencimento}</td>
+                <td className="py-3">
+                  {item.vencimento.split('-').reverse().join('/')} 
+                  </td>
                 <td className="py-3 font-medium text-gray-900">{item.fornecedor}</td>
                 <td className="py-3 text-gray-500">{item.categoria}</td>
                 <td className="py-3 font-semibold">{item.valor}</td>
                 <td className="py-3">
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                    STATUS_STYLES[item.status] || 'bg-gray-100 text-gray-600'
+                    STATUS_STYLES[currentStatus] || 'bg-gray-100 text-gray-600'
                   }`}>
-                    {item.status}
+                    {currentStatus}
                   </span>
                 </td>
                 <td className="py-3 text-right relative pr-2">
@@ -122,7 +148,8 @@ export default function TransactionsTable() {
                   )}
                 </td>
               </tr>
-            ))}
+            );
+          })}
           </tbody>
         </table>
       </div>
