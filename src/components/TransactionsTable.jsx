@@ -16,6 +16,20 @@ export default function TransactionsTable() {
     { id: 3, vencimento: '19/08/2026', fornecedor: 'Sementes AgroTech', categoria: 'Sementes', valor: 'R$ 2.300,00', status: 'Pendente'}
   ];
 
+  const filteredTransactions = transactions.filter((item) => {
+    if(categoryTableHeader === 'Todas as Categorias'){
+      return true;
+    }
+
+    return item.categoria.includes(categoryTableHeader) || item.categoria === categoryTableHeader;
+  });
+
+  const STATUS_STYLES = {
+    Pago: 'bg-emerald-100 text-emerald-700',
+    Pendente: 'bg-amber-100 text-amber-700',
+    Atrasado: 'bg-rose-100 text-rose-700',
+  };
+
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
@@ -72,7 +86,7 @@ export default function TransactionsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 text-gray-700">
-            {transactions.map((item) => (
+            {filteredTransactions.map((item) => (
               <tr key={item.id} className="hover:bg-gray-50/50">
                 <td className="py-3">{item.vencimento}</td>
                 <td className="py-3 font-medium text-gray-900">{item.fornecedor}</td>
@@ -80,7 +94,7 @@ export default function TransactionsTable() {
                 <td className="py-3 font-semibold">{item.valor}</td>
                 <td className="py-3">
                   <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                    item.status === 'Pago' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                    STATUS_STYLES[item.status] || 'bg-gray-100 text-gray-600'
                   }`}>
                     {item.status}
                   </span>
