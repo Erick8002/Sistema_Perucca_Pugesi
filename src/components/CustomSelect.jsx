@@ -21,7 +21,7 @@ export default function CustomSelect({
           <span>{selected}</span>
 
           {isSelectedCurrent && (
-            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded font-semibold">
+            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-px rounded font-semibold">
               Atual
             </span>
           )}
