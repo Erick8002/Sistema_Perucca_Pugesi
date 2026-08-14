@@ -3,15 +3,17 @@ import CustomSelect from './CustomSelect';
 import { Search, MoreHorizontal, FileText, Printer, Plus, Edit3 } from 'lucide-react';
 
 const categoryOptions = ['Todas as Categorias', 'Fertilizantes', 'Defensivos', 'Sementes'];
+const monthOptions = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
 
 export default function TransactionsTable() {
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [category, setCategory] = useState('Fertilizantes');
+  const [categoryTableHeader, setCategoryTableHeader] = useState('Todas as Categorias');
+  const [monthTableFilter, setMonthTableFilter] = useState('Agosto');
 
   const transactions = [
-    { id: 1, vencimento: '08/08/2026', fornecedor: 'Agrofértil Insumos', categoria: 'Fertilizantes & Adubos', valor: 'R$ 4.500,00', status: 'Pago' },
-    { id: 2, vencimento: '10/08/2026', fornecedor: 'MaqCampo Peças e Manutenção', categoria: 'Manutenção de Maquinário', valor: 'R$ 1.580,00', status: 'Pendente' },
-    { id: 3, vencimento: '19/08/2026', fornecedor: 'xxxxxxxx', categoria: 'xxxxxxxxxxxx', valor: 'R$ X.XXX,XX', status: 'Pendente'}
+    { id: 1, vencimento: '08/08/2026', fornecedor: 'Agrofértil Insumos', categoria: 'Fertilizantes', valor: 'R$ 4.500,00', status: 'Pago' },
+    { id: 2, vencimento: '10/08/2026', fornecedor: 'MaqCampo Peças e Manutenção', categoria: 'Defensivos', valor: 'R$ 1.580,00', status: 'Pendente' },
+    { id: 3, vencimento: '19/08/2026', fornecedor: 'Sementes AgroTech', categoria: 'Sementes', valor: 'R$ 2.300,00', status: 'Pendente'}
   ];
 
   return (
@@ -32,8 +34,8 @@ export default function TransactionsTable() {
           <div className="p-2">
             <CustomSelect
               options = {categoryOptions}
-              selected = {category}
-              onSelect = {setCategory}
+              selected = {categoryTableHeader}
+              onSelect = {setCategoryTableHeader}
             />
           </div>
 
@@ -44,9 +46,13 @@ export default function TransactionsTable() {
       </div>
 
       <div className="flex items-center gap-3 text-xs text-gray-500">
-        <select className="bg-white border border-gray-200 rounded px-2 py-1">
-          <option>Agosto</option>
-        </select>
+        <div className="p-2">
+          <CustomSelect
+            options = {monthOptions}
+            selected = {monthTableFilter}
+            onSelect = {setMonthTableFilter}
+          />
+        </div>
         <div className="flex items-center gap-2">
           <span className="bg-white border border-gray-200 rounded px-2 py-1 text-gray-400">Data Inicial 🗓️</span>
           <span className="bg-white border border-gray-200 rounded px-2 py-1 text-gray-400">Data Final 🗓️</span>

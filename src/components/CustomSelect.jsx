@@ -1,16 +1,13 @@
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-const options = ["Todas as Categorias", "Fertilizantes", "Defensivos", "Sementes",];
-
-export default function CustomSelect() {
+export default function CustomSelect({options = [], selected, onSelect} ) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selected, setSelected] = useState("Fertilizantes");
 
   return (
     <div className="relative w-52 text-sm">
       <button
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={() => setIsOpen(!isOpen)} type="button"
         className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-gray-700 shadow-sm transition-all hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
       >
         <span>{selected}</span>
@@ -24,14 +21,15 @@ export default function CustomSelect() {
           {options.map((option) => (
             <button
               key={option}
+              type="button"
               onClick={() => {
-                setSelected(option);
+                onSelect(option);
                 setIsOpen(false);
               }}
               className={`flex w-full items-center rounded-lg px-3 py-2 text-left transition-colors ${
                 selected === option
                   ? "bg-purple-50 text-purple-700 font-medium" // Estilo do selecionado
-                  : "text-gray-600 hover:bg-gray-50"
+                  : "text-gray-600 hover:bg-gray-50" // Estilo do não selecionado
               }`}
             >
               {option}

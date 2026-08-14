@@ -16,7 +16,7 @@ export default function App() {
         <div className="max-w-6xl mx-auto space-y-6">
           <Header />
           <KpiCards />
-          <TransactionsTable /> 
+          <TransactionsTable />
           <RelatoryButtons />
           <PastelCards />
           <ChartsSection />
