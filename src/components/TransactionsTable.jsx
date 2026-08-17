@@ -1,59 +1,120 @@
-import React, { useState } from 'react';
-import CustomSelect from './CustomSelect';
-import { Search, MoreHorizontal, FileText, Printer, Plus, Edit3 } from 'lucide-react';
+import React, { useState } from "react";
+import CustomSelect from "./CustomSelect";
+import { DateInput } from "./DateInput";
+import {
+  Search,
+  MoreHorizontal,
+  FileText,
+  Printer,
+  Plus,
+  Edit3,
+} from "lucide-react";
 
-const categoryOptions = ['Todas as Categorias', 'Fertilizantes', 'Defensivos', 'Sementes'];
-const monthOptions = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+const categoryOptions = [
+  "Todas as Categorias",
+  "Fertilizantes",
+  "Defensivos",
+  "Sementes",
+];
+const monthOptions = [
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
 
 export default function TransactionsTable() {
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [categoryTableHeader, setCategoryTableHeader] = useState('Todas as Categorias');
-  const [monthTableFilter, setMonthTableFilter] = useState('Agosto');
+  const [categoryTableHeader, setCategoryTableHeader] = useState(
+    "Todas as Categorias",
+  );
+  const [monthTableFilter, setMonthTableFilter] = useState("Agosto");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const transactions = [
-    { id: 1, vencimento: '2026-08-08', fornecedor: 'Agrofértil Insumos', categoria: 'Fertilizantes', valor: 'R$ 4.500,00', status: 'Pago' },
-    { id: 2, vencimento: '2026-08-10', fornecedor: 'MaqCampo Peças e Manutenção', categoria: 'Defensivos', valor: 'R$ 1.580,00', status: 'Pendente' },
-    { id: 3, vencimento: '2026-08-19', fornecedor: 'Sementes AgroTech', categoria: 'Sementes', valor: 'R$ 2.300,00', status: 'Pendente'}
+    {
+      id: 1,
+      vencimento: "2026-08-08",
+      fornecedor: "Agrofértil Insumos",
+      categoria: "Fertilizantes",
+      valor: "R$ 4.500,00",
+      status: "Pago",
+    },
+    {
+      id: 2,
+      vencimento: "2026-08-10",
+      fornecedor: "MaqCampo Peças e Manutenção",
+      categoria: "Defensivos",
+      valor: "R$ 1.580,00",
+      status: "Pendente",
+    },
+    {
+      id: 3,
+      vencimento: "2026-08-19",
+      fornecedor: "Sementes AgroTech",
+      categoria: "Sementes",
+      valor: "R$ 2.300,00",
+      status: "Pendente",
+    },
   ];
 
   const filteredTransactions = transactions.filter((item) => {
-    if(categoryTableHeader === 'Todas as Categorias'){
+    if (categoryTableHeader === "Todas as Categorias") {
       return true;
     }
 
-    return item.categoria.includes(categoryTableHeader) || item.categoria === categoryTableHeader;
+    return (
+      item.categoria.includes(categoryTableHeader) ||
+      item.categoria === categoryTableHeader
+    );
   });
 
   const STATUS_STYLES = {
-    Pago: 'bg-emerald-100 text-emerald-700',
-    Pendente: 'bg-amber-100 text-amber-700',
-    Atrasado: 'bg-rose-100 text-rose-700',
+    Pago: "bg-emerald-100 text-emerald-700",
+    Pendente: "bg-amber-100 text-amber-700",
+    Atrasado: "bg-rose-100 text-rose-700",
   };
 
   const getTransactionStatus = (item) => {
-    if (item.status === 'Pago') return 'Pago';
+    if (item.status === "Pago") return "Pago";
 
     const today = new Date();
     today.setHours(0, 0, 0, 0); //Setando a hr, min, seg e ms para zero para ele fazer um comparativo apenas das datas
 
-    const [year, month, day] = item.vencimento.split('-'); // Utilizando o split('/') para tirar a barra do texto e guardar apenas o número da data
-    const dueDate = new Date(year, month -1, day); // criando o objeto da data de vencimento, o "month-1" pois o js conta os meses do (0)
+    const [year, month, day] = item.vencimento.split("-"); // Utilizando o split('/') para tirar a barra do texto e guardar apenas o número da data
+    const dueDate = new Date(year, month - 1, day); // criando o objeto da data de vencimento, o "month-1" pois o js conta os meses do (0)
 
-    console.log("Data do item:", item.vencimento, "=> Convertida para:", dueDate);
+    console.log(
+      "Data do item:",
+      item.vencimento,
+      "=> Convertida para:",
+      dueDate,
+    );
 
-    if(dueDate < today){
-      return 'Atrasado';
-    } 
-    
-    return 'Pendente';
-  }
+    if (dueDate < today) {
+      return "Atrasado";
+    }
+
+    return "Pendente";
+  };
 
   const currentMonthName = monthOptions[new Date().getMonth()];
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 space-y-reverse">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <h2 className="text-base font-bold text-gray-800 ">Todos os Gastos do Mês</h2>
+        <h2 className="text-base font-bold text-gray-800 ">
+          Todos os Gastos do Mês
+        </h2>
 
         <div className="flex items-center gap-2 flex-1 max-w-3xl">
           <div className="relative flex-1">
@@ -67,9 +128,9 @@ export default function TransactionsTable() {
 
           <div className="p-2">
             <CustomSelect
-              options = {categoryOptions}
-              selected = {categoryTableHeader}
-              onSelect = {setCategoryTableHeader}
+              options={categoryOptions}
+              selected={categoryTableHeader}
+              onSelect={setCategoryTableHeader}
             />
           </div>
 
@@ -82,15 +143,23 @@ export default function TransactionsTable() {
       <div className="flex items-center gap-3 text-xs text-gray-500">
         <div className="p-2">
           <CustomSelect
-            options = {monthOptions}
-            selected = {monthTableFilter}
-            onSelect = {setMonthTableFilter}
-            currentOption = {currentMonthName}
+            options={monthOptions}
+            selected={monthTableFilter}
+            onSelect={setMonthTableFilter}
+            currentOption={currentMonthName}
           />
         </div>
         <div className="flex items-center gap-2">
-          <span className="bg-white border border-gray-200 rounded px-2 py-1 text-gray-400">Data Inicial 🗓️</span>
-          <span className="bg-white border border-gray-200 rounded px-2 py-1 text-gray-400">Data Final 🗓️</span>
+          <DateInput
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            placeholder={"Data Inicial"}
+          />
+          <DateInput
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            placeholder={"Data Final"}
+          />
         </div>
       </div>
 
@@ -111,45 +180,56 @@ export default function TransactionsTable() {
               const currentStatus = getTransactionStatus(item);
 
               return (
-              <tr key={item.id} className="hover:bg-gray-50/50">
-                <td className="py-3">
-                  {item.vencimento.split('-').reverse().join('/')} 
+                <tr key={item.id} className="hover:bg-gray-50/50">
+                  <td className="py-3">
+                    {item.vencimento.split("-").reverse().join("/")}
                   </td>
-                <td className="py-3 font-medium text-gray-900">{item.fornecedor}</td>
-                <td className="py-3 text-gray-500">{item.categoria}</td>
-                <td className="py-3 font-semibold">{item.valor}</td>
-                <td className="py-3">
-                  <span className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                    STATUS_STYLES[currentStatus] || 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {currentStatus}
-                  </span>
-                </td>
-                <td className="py-3 text-right relative pr-2">
-                  <button 
-                    onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
-                    className="p-1 hover:bg-gray-200 rounded text-gray-500"
-                  >
-                    <MoreHorizontal className="w-4 h-4" />
-                  </button>
+                  <td className="py-3 font-medium text-gray-900">
+                    {item.fornecedor}
+                  </td>
+                  <td className="py-3 text-gray-500">{item.categoria}</td>
+                  <td className="py-3 font-semibold">{item.valor}</td>
+                  <td className="py-3">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                        STATUS_STYLES[currentStatus] ||
+                        "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {currentStatus}
+                    </span>
+                  </td>
+                  <td className="py-3 text-right relative pr-2">
+                    <button
+                      onClick={() =>
+                        setOpenDropdown(
+                          openDropdown === item.id ? null : item.id,
+                        )
+                      }
+                      className="p-1 hover:bg-gray-200 rounded text-gray-500"
+                    >
+                      <MoreHorizontal className="w-4 h-4" />
+                    </button>
 
-                  {openDropdown === item.id && (
-                    <div className="absolute right-0 top-10 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-left text-xs">
-                      <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
-                        <FileText className="w-3.5 h-3.5" /> Ver / Baixar Boleto
-                      </button>
-                      <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
-                        <Printer className="w-3.5 h-3.5" /> Imprimir Comprovante
-                      </button>
-                      <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
-                        <Edit3 className="w-3.5 h-3.5" /> Editar Lançamento
-                      </button>
-                    </div>
-                  )}
-                </td>
-              </tr>
-            );
-          })}
+                    {openDropdown === item.id && (
+                      <div className="absolute right-0 top-10 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-left text-xs">
+                        <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
+                          <FileText className="w-3.5 h-3.5" /> Ver / Baixar
+                          Boleto
+                        </button>
+                        <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
+                          <Printer className="w-3.5 h-3.5" /> Imprimir
+                          Comprovante
+                        </button>
+                        <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
+                          <Edit3 className="w-3.5 h-3.5" /> Editar Lançamento
+                        </button>
+                      </div>
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -157,9 +237,15 @@ export default function TransactionsTable() {
       <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-gray-50">
         <span>Mostrando 1-10 de 23 lançamentos</span>
         <div className="flex items-center gap-1">
-          <span>‹</span> <span className="font-bold text-gray-700">1</span> <span>2</span> <span>3</span> <span>›</span>
+          <span>‹</span> <span className="font-bold text-gray-700">1</span>{" "}
+          <span>2</span> <span>3</span> <span>›</span>
         </div>
-        <div>Itens por página: <select className="bg-transparent border rounded text-[11px]"><option>10</option></select></div>
+        <div>
+          Itens por página:{" "}
+          <select className="bg-transparent border rounded text-[11px]">
+            <option>10</option>
+          </select>
+        </div>
       </div>
     </div>
   );
