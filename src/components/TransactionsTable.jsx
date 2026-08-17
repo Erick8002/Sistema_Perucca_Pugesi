@@ -51,7 +51,7 @@ export default function TransactionsTable() {
   const currentMonthName = monthOptions[new Date().getMonth()];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-4">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 space-y-reverse">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <h2 className="text-base font-bold text-gray-800 ">Todos os Gastos do Mês</h2>
 
