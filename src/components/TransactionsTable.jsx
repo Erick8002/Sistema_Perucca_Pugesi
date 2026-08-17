@@ -36,9 +36,12 @@ export default function TransactionsTable() {
   const [categoryTableHeader, setCategoryTableHeader] = useState(
     "Todas as Categorias",
   );
-  const [monthTableFilter, setMonthTableFilter] = useState("Agosto");
+  const currentMonthIndex = monthOptions[new Date().getMonth()];
+  const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  
+  console.log("Datas atuais:", { startDate, endDate });
 
   const transactions = [
     {
@@ -59,7 +62,7 @@ export default function TransactionsTable() {
     },
     {
       id: 3,
-      vencimento: "2026-08-19",
+      vencimento: "2026-08-17",
       fornecedor: "Sementes AgroTech",
       categoria: "Sementes",
       valor: "R$ 2.300,00",
@@ -67,15 +70,23 @@ export default function TransactionsTable() {
     },
   ];
 
-  const filteredTransactions = transactions.filter((item) => {
-    if (categoryTableHeader === "Todas as Categorias") {
-      return true;
+  const filteredTransactions = transactions.filter((transaction) => {
+    if (!transaction) return false;
+
+    const category = categoryTableHeader === "Todas as Categorias" || transaction.categoria?.includes(categoryTableHeader);
+    // console.log("Existe categoria? " + category);
+
+    if (!category) return false;
+
+    if (startDate && transaction.vencimento < startDate) {
+      return false;
     }
 
-    return (
-      item.categoria.includes(categoryTableHeader) ||
-      item.categoria === categoryTableHeader
-    );
+    if (endDate && transaction.vencimento > endDate) {
+      return false;
+    }
+
+    return true;
   });
 
   const STATUS_STYLES = {
@@ -93,12 +104,12 @@ export default function TransactionsTable() {
     const [year, month, day] = item.vencimento.split("-"); // Utilizando o split('/') para tirar a barra do texto e guardar apenas o número da data
     const dueDate = new Date(year, month - 1, day); // criando o objeto da data de vencimento, o "month-1" pois o js conta os meses do (0)
 
-    console.log(
-      "Data do item:",
-      item.vencimento,
-      "=> Convertida para:",
-      dueDate,
-    );
+    // console.log(
+    //   "Data do item:",
+    //   item.vencimento,
+    //   "=> Convertida para:",
+    //   dueDate,
+    // );
 
     if (dueDate < today) {
       return "Atrasado";
@@ -146,7 +157,7 @@ export default function TransactionsTable() {
             options={monthOptions}
             selected={monthTableFilter}
             onSelect={setMonthTableFilter}
-            currentOption={currentMonthName}
+            currentOption={currentMonthIndex}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -160,6 +171,19 @@ export default function TransactionsTable() {
             onChange={(e) => setEndDate(e.target.value)}
             placeholder={"Data Final"}
           />
+
+          {(startDate || endDate) && (
+            <button
+              type="button"
+              onClick={() => {
+                setStartDate("");
+                setEndDate("");
+              }}
+              className="text-xs font-medium text-gray-500 hover:text-purple-600 transition-colors underline cursor-pointer"
+            >
+              Limpar datas
+            </button>
+          )}
         </div>
       </div>
 
