@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import CustomSelect from "./CustomSelect";
 import { DateInput } from "./DateInput";
 import {
@@ -40,6 +40,21 @@ export default function TransactionsTable() {
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const selectRef = useRef("");
+
+    useEffect(() => {
+    function handleClickOutside(event){
+      if(selectRef.current && !selectRef.current.contains(event.target)){
+        setOpenDropdown(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
   
   console.log("Datas atuais:", { startDate, endDate });
 
@@ -187,7 +202,7 @@ export default function TransactionsTable() {
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div>
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-gray-100 text-gray-400 font-medium">
@@ -224,7 +239,7 @@ export default function TransactionsTable() {
                     </span>
                   </td>
                   <td className="py-3 text-right relative pr-2">
-                    <button
+                    <button ref={selectRef}
                       onClick={() =>
                         setOpenDropdown(
                           openDropdown === item.id ? null : item.id,
