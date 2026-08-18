@@ -17,6 +17,7 @@ const categoryOptions = [
   "Sementes",
 ];
 const monthOptions = [
+  "Selecione o mês",
   "Janeiro",
   "Fevereiro",
   "Março",
@@ -36,10 +37,27 @@ export default function TransactionsTable() {
   const [categoryTableHeader, setCategoryTableHeader] = useState(
     "Todas as Categorias",
   );
-  const currentMonthIndex = monthOptions[new Date().getMonth()];
+  const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const handleMonthSelect = (selectedMonth) => {
+    setMonthTableFilter(selectedMonth);
+    setStartDate("");
+    setEndDate("");
+  };
+
+  const handleStartDateChange = (e) => {
+    setStartDate(e.target.value);
+    setMonthTableFilter(monthOptions[0]);
+  };
+
+  const handleEndDateChange = (e) => {
+    setEndDate(e.target.value);
+    setMonthTableFilter(monthOptions[0])
+  };
+
   const selectRef = useRef("");
 
     useEffect(() => {
@@ -83,6 +101,14 @@ export default function TransactionsTable() {
       valor: "R$ 2.300,00",
       status: "Pendente",
     },
+    {
+      id: 4,
+      vencimento: "2026-07-17",
+      fornecedor: "Fertilizantes AgroTech",
+      categoria: "Fertilizantes",
+      valor: "R$ 2.000,00",
+      status: "Pago",
+    },
   ];
 
   const filteredTransactions = transactions.filter((transaction) => {
@@ -92,6 +118,16 @@ export default function TransactionsTable() {
     // console.log("Existe categoria? " + category);
 
     if (!category) return false;
+
+    if(monthTableFilter && monthTableFilter != monthOptions[0]) {
+      const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
+      const [, monthString] = transaction.vencimento.split("-");
+      const transactionMonthIndex = parseInt(monthString, 10);
+
+      if(transactionMonthIndex !== selectedMonthNumber) {
+        return false;
+      }
+    }
 
     if (startDate && transaction.vencimento < startDate) {
       return false;
@@ -133,7 +169,7 @@ export default function TransactionsTable() {
     return "Pendente";
   };
 
-  const currentMonthName = monthOptions[new Date().getMonth()];
+  const currentMonthName = monthOptions[new Date().getMonth() + 1];
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 space-y-reverse">
@@ -171,28 +207,29 @@ export default function TransactionsTable() {
           <CustomSelect
             options={monthOptions}
             selected={monthTableFilter}
-            onSelect={setMonthTableFilter}
+            onSelect={handleMonthSelect}
             currentOption={currentMonthIndex}
           />
         </div>
         <div className="flex items-center gap-2">
           <DateInput
             value={startDate}
-            onChange={(e) => setStartDate(e.target.value)}
+            onChange={handleStartDateChange}
             placeholder={"Data Inicial"}
           />
           <DateInput
             value={endDate}
-            onChange={(e) => setEndDate(e.target.value)}
+            onChange={handleEndDateChange}
             placeholder={"Data Final"}
           />
 
-          {(startDate || endDate) && (
+          {(startDate || endDate || monthTableFilter !== monthOptions[0]) && (
             <button
               type="button"
               onClick={() => {
                 setStartDate("");
                 setEndDate("");
+                setMonthTableFilter(monthOptions[0]);
               }}
               className="text-xs font-medium text-gray-500 hover:text-purple-600 transition-colors underline cursor-pointer"
             >
