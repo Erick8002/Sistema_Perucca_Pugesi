@@ -1,17 +1,27 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronDown } from "lucide-react";
 
-export default function CustomSelect({
-  options = [],
-  selected,
-  onSelect,
-  currentOption,
-}) {
+export default function CustomSelect({options = [], selected, onSelect, currentOption}) {
   const [isOpen, setIsOpen] = useState(false);
   const isSelectedCurrent = selected === currentOption;
+  const selectRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(event){
+      if(selectRef.current && !selectRef.current.contains(event.target)){
+        setIsOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   return (
-    <div className="relative w-52 text-sm">
+    <div ref={selectRef} className="relative w-52 text-sm">
       <button
         onClick={() => setIsOpen(!isOpen)}
         type="button"
@@ -33,7 +43,7 @@ export default function CustomSelect({
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full z-10 mt-1.5 w-full overflow-hidden rounded-xl border border-gray-100 bg-white p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1">
+        <div className="absolute left-0 top-full z-10 mt-1.5 w-full overflow-hidden rounded-xl border border-gray-100 bg-white p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 max-h-60 overflow-y-auto">
           {options.map((option) => {
             const isCurrent = option === currentOption;
             return (
