@@ -1,14 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import CustomSelect from "./CustomSelect";
 import { DateInput } from "./DateInput";
-import {
-  Search,
-  MoreHorizontal,
-  FileText,
-  Printer,
-  Plus,
-  Edit3,
-} from "lucide-react";
+import { Search, MoreHorizontal, FileText, Printer, Plus, Edit3 } from "lucide-react";
+import {ActionMenu} from "./ActionMenu";
 
 const categoryOptions = [
   "Todas as Categorias",
@@ -34,13 +28,12 @@ const monthOptions = [
 
 export default function TransactionsTable() {
   const [openDropdown, setOpenDropdown] = useState(null);
-  const [categoryTableHeader, setCategoryTableHeader] = useState(
-    "Todas as Categorias",
-  );
+  const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const selectRef = useRef("");
 
   const handleMonthSelect = (selectedMonth) => {
     setMonthTableFilter(selectedMonth);
@@ -57,8 +50,6 @@ export default function TransactionsTable() {
     setEndDate(e.target.value);
     setMonthTableFilter(monthOptions[0])
   };
-
-  const selectRef = useRef("");
 
     useEffect(() => {
     function handleClickOutside(event){
@@ -139,6 +130,10 @@ export default function TransactionsTable() {
 
     return true;
   });
+
+  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+    return a.vencimento.localeCompare(b.vencimento);
+  })
 
   const STATUS_STYLES = {
     Pago: "bg-emerald-100 text-emerald-700",
@@ -252,7 +247,7 @@ export default function TransactionsTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 text-gray-700">
-            {filteredTransactions.map((item) => {
+            {sortedTransactions.map((item) => {
               const currentStatus = getTransactionStatus(item);
 
               return (
@@ -275,33 +270,8 @@ export default function TransactionsTable() {
                       {currentStatus}
                     </span>
                   </td>
-                  <td className="py-3 text-right relative pr-2">
-                    <button ref={selectRef}
-                      onClick={() =>
-                        setOpenDropdown(
-                          openDropdown === item.id ? null : item.id,
-                        )
-                      }
-                      className="p-1 hover:bg-gray-200 rounded text-gray-500"
-                    >
-                      <MoreHorizontal className="w-4 h-4" />
-                    </button>
-
-                    {openDropdown === item.id && (
-                      <div className="absolute right-0 top-10 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-left text-xs">
-                        <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
-                          <FileText className="w-3.5 h-3.5" /> Ver / Baixar
-                          Boleto
-                        </button>
-                        <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
-                          <Printer className="w-3.5 h-3.5" /> Imprimir
-                          Comprovante
-                        </button>
-                        <button className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700">
-                          <Edit3 className="w-3.5 h-3.5" /> Editar Lançamento
-                        </button>
-                      </div>
-                    )}
+                  <td className="py-3 text-right pr-2">
+                    <ActionMenu item={item} />
                   </td>
                 </tr>
               );
