@@ -50,16 +50,35 @@ export default function TransactionsTable() {
     setEndDate(e.target.value);
     setMonthTableFilter(monthOptions[0])
   };
+  
+  useEffect(() => {
+    const activeDate = startDate || endDate;
+    const activeStartDateMonth = startDate? startDate.split("-")[1] : false;
+    const activeEndDateMonth = endDate? endDate.split("-")[1] : false;
 
-    useEffect(() => {
-    function handleClickOutside(event){
-      if(selectRef.current && !selectRef.current.contains(event.target)){
+    if(activeDate) {
+      const [, monthString] = activeDate.split("-");
+      const monthIndex = parseInt(monthString, 10);
+
+      const arrayMonthOptions = monthOptions[monthIndex];
+
+      if(activeStartDateMonth && activeEndDateMonth) {
+        if(activeStartDateMonth !== activeEndDateMonth) {
+          setMonthTableFilter(monthOptions[0]);
+        }
+      } else if(arrayMonthOptions && monthTableFilter !== arrayMonthOptions){
+        setMonthTableFilter(arrayMonthOptions);
+      }
+    }
+  }, [startDate, endDate, monthTableFilter])
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (selectRef.current && !selectRef.current.contains(event.target)) {
         setOpenDropdown(false);
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside);
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -112,7 +131,7 @@ export default function TransactionsTable() {
 
     if(monthTableFilter && monthTableFilter != monthOptions[0]) {
       const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
-      const [, monthString] = transaction.vencimento.split("-");
+      const monthString = transaction.vencimento.split("-")[1];
       const transactionMonthIndex = parseInt(monthString, 10);
 
       if(transactionMonthIndex !== selectedMonthNumber) {
@@ -131,7 +150,7 @@ export default function TransactionsTable() {
     return true;
   });
 
-  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
+  const sortedTransactions = [...filteredTransactions].sort((b, a) => {
     return a.vencimento.localeCompare(b.vencimento);
   })
 
