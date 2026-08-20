@@ -1,39 +1,23 @@
 import React, { useState, useRef, useEffect } from "react";
 import CustomSelect from "./CustomSelect";
 import { DateInput } from "./DateInput";
-import { Search, MoreHorizontal, FileText, Printer, Plus, Edit3 } from "lucide-react";
+import { Search, FileText, Plus } from "lucide-react";
 import {ActionMenu} from "./ActionMenu";
 
-const categoryOptions = [
-  "Todas as Categorias",
-  "Fertilizantes",
-  "Defensivos",
-  "Sementes",
-];
-const monthOptions = [
-  "Selecione o mês",
-  "Janeiro",
-  "Fevereiro",
-  "Março",
-  "Abril",
-  "Maio",
-  "Junho",
-  "Julho",
-  "Agosto",
-  "Setembro",
-  "Outubro",
-  "Novembro",
-  "Dezembro",
-];
-
-export default function TransactionsTable() {
-  const [openDropdown, setOpenDropdown] = useState(null);
-  const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
+export default function TransactionsTable({
+  filterTransactions,
+  categoryTableHeader,
+  setCategoryTableHeader,
+  monthTableFilter,
+  setMonthTableFilter,
+  startDate,
+  setStartDate,
+  endDate,
+  setEndDate,
+  categoryOptions,
+  monthOptions,
+}) {
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
-  const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
-  const selectRef = useRef("");
 
   const handleMonthSelect = (selectedMonth) => {
     setMonthTableFilter(selectedMonth);
@@ -50,7 +34,7 @@ export default function TransactionsTable() {
     setEndDate(e.target.value);
     setMonthTableFilter(monthOptions[0])
   };
-  
+
   useEffect(() => {
     const activeDate = startDate || endDate;
     const activeStartDateMonth = startDate? startDate.split("-")[1] : false;
@@ -59,7 +43,6 @@ export default function TransactionsTable() {
     if(activeDate) {
       const [, monthString] = activeDate.split("-");
       const monthIndex = parseInt(monthString, 10);
-
       const arrayMonthOptions = monthOptions[monthIndex];
 
       if(activeStartDateMonth && activeEndDateMonth) {
@@ -70,89 +53,11 @@ export default function TransactionsTable() {
         setMonthTableFilter(arrayMonthOptions);
       }
     }
-  }, [startDate, endDate, monthTableFilter])
+  }, [startDate, endDate, monthTableFilter, monthOptions, setMonthTableFilter]);
 
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (selectRef.current && !selectRef.current.contains(event.target)) {
-        setOpenDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-  
-  console.log("Datas atuais:", { startDate, endDate });
-
-  const transactions = [
-    {
-      id: 1,
-      vencimento: "2026-08-08",
-      fornecedor: "Agrofértil Insumos",
-      categoria: "Fertilizantes",
-      valor: "R$ 4.500,00",
-      status: "Pago",
-    },
-    {
-      id: 2,
-      vencimento: "2026-08-10",
-      fornecedor: "MaqCampo Peças e Manutenção",
-      categoria: "Defensivos",
-      valor: "R$ 1.580,00",
-      status: "Pendente",
-    },
-    {
-      id: 3,
-      vencimento: "2026-08-17",
-      fornecedor: "Sementes AgroTech",
-      categoria: "Sementes",
-      valor: "R$ 2.300,00",
-      status: "Pendente",
-    },
-    {
-      id: 4,
-      vencimento: "2026-07-17",
-      fornecedor: "Fertilizantes AgroTech",
-      categoria: "Fertilizantes",
-      valor: "R$ 2.000,00",
-      status: "Pago",
-    },
-  ];
-
-  const filteredTransactions = transactions.filter((transaction) => {
-    if (!transaction) return false;
-
-    const category = categoryTableHeader === "Todas as Categorias" || transaction.categoria?.includes(categoryTableHeader);
-    // console.log("Existe categoria? " + category);
-
-    if (!category) return false;
-
-    if(monthTableFilter && monthTableFilter != monthOptions[0]) {
-      const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
-      const monthString = transaction.vencimento.split("-")[1];
-      const transactionMonthIndex = parseInt(monthString, 10);
-
-      if(transactionMonthIndex !== selectedMonthNumber) {
-        return false;
-      }
-    }
-
-    if (startDate && transaction.vencimento < startDate) {
-      return false;
-    }
-
-    if (endDate && transaction.vencimento > endDate) {
-      return false;
-    }
-
-    return true;
-  });
-
-  const sortedTransactions = [...filteredTransactions].sort((b, a) => {
+  const sortedTransactions = [...filterTransactions].sort((b, a) => {
     return a.vencimento.localeCompare(b.vencimento);
-  })
+  });
 
   const STATUS_STYLES = {
     Pago: "bg-emerald-100 text-emerald-700",
@@ -160,7 +65,7 @@ export default function TransactionsTable() {
     Atrasado: "bg-rose-100 text-rose-700",
   };
 
-  const getTransactionStatus = (item) => {
+const getTransactionStatus = (item) => {
     if (item.status === "Pago") return "Pago";
 
     const today = new Date();
@@ -182,8 +87,6 @@ export default function TransactionsTable() {
 
     return "Pendente";
   };
-
-  const currentMonthName = monthOptions[new Date().getMonth() + 1];
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 space-y-reverse">
@@ -300,7 +203,7 @@ export default function TransactionsTable() {
       </div>
 
       <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-gray-50">
-        <span>Mostrando 1-10 de 23 lançamentos</span>
+        <span>Mostrando 1-10 de {sortedTransactions.length} lançamentos</span>
         <div className="flex items-center gap-1">
           <span>‹</span> <span className="font-bold text-gray-700">1</span>{" "}
           <span>2</span> <span>3</span> <span>›</span>

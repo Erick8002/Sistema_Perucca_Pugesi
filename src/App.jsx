@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useState} from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KpiCards from './components/KpiCards';
@@ -7,7 +7,124 @@ import RelatoryButtons from './components/RelatoryButtons';
 import PastelCards from './components/PastelCards';
 import ChartsSection from './components/ChartsSection';
 
+const categoryOptions = [
+  "Todas as Categorias",
+  "Fertilizantes",
+  "Defensivos",
+  "Sementes",
+];
+
+const monthOptions = [
+  "Selecione o mês",
+  "Janeiro",
+  "Fevereiro",
+  "Março",
+  "Abril",
+  "Maio",
+  "Junho",
+  "Julho",
+  "Agosto",
+  "Setembro",
+  "Outubro",
+  "Novembro",
+  "Dezembro",
+];
+
+const initialTransactions = [
+  {
+    id: 1,
+    vencimento: "2026-08-08",
+    fornecedor: "Agrofértil Insumos",
+    categoria: "Fertilizantes",
+    valor: "R$ 4.500,00",
+    status: "Pago",
+  },
+  {
+    id: 2,
+    vencimento: "2026-08-10",
+    fornecedor: "MaqCampo Peças e Manutenção",
+    categoria: "Defensivos",
+    valor: "R$ 1.580,00",
+    status: "Pendente",
+  },
+  {
+    id: 3,
+    vencimento: "2026-08-17",
+    fornecedor: "Sementes AgroTech",
+    categoria: "Sementes",
+    valor: "R$ 2.300,00",
+    status: "Pendente",
+  },
+  {
+    id: 4,
+    vencimento: "2026-07-17",
+    fornecedor: "Fertilizantes AgroTech",
+    categoria: "Fertilizantes",
+    valor: "R$ 2.000,00",
+    status: "Pago",
+  },
+];
+
+const parseCurrency = (valueString) => {
+  if(!valueString) return 0;
+  const numericString = valueString.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
+  return parseFloat(numericString) || 0;
+};
+
 export default function App() {
+  const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
+
+  const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
+  const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+
+  const filteredTransactions = initialTransactions.filter((transaction) => {
+    if (!transaction) return false;
+
+    const category = categoryTableHeader === "Todas as Categorias" || transaction.categoria?.includes(categoryTableHeader);
+    // console.log("Existe categoria? " + category);
+
+    if (!category) return false;
+
+    if(monthTableFilter && monthTableFilter != monthOptions[0]) {
+      const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
+      const monthString = transaction.vencimento.split("-")[1];
+      const transactionMonthIndex = parseInt(monthString, 10);
+
+      if(transactionMonthIndex !== selectedMonthNumber) {
+        return false;
+      }
+    }
+
+    if (startDate && transaction.vencimento < startDate) {
+      return false;
+    }
+
+    if (endDate && transaction.vencimento > endDate) {
+      return false;
+    }
+
+    return true;
+  });
+
+  const totalExpenses = filteredTransactions.reduce((acc, item) => acc + parseCurrency(item.valor), 0);
+  const expensesCount = filteredTransactions.length;
+
+  const paidTransactions = filteredTransactions.filter((item) => item.status === "Pago");
+  const totalPaid = paidTransactions.reduce(
+    (acc, item) => acc + parseCurrency(item.valor),
+    0
+  );
+  const paidCount = paidTransactions.length;
+
+  const pendingTransactions = filteredTransactions.filter((item) => item.status === "Pendente");
+  const totalPending = pendingTransactions.reduce(
+    (acc, item) => acc + parseCurrency(item.valor),
+    0
+  );
+  const pendingCount = pendingTransactions.length;
+
   return (
     <div className="flex min-h-screen bg-[#F4F4F6] text-gray-800 font-sans">
       <Sidebar />
@@ -15,8 +132,28 @@ export default function App() {
       <main className="flex-1 p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto space-y-6">
           <Header />
-          <KpiCards />
-          <TransactionsTable />
+          <KpiCards 
+            totalExpenses={totalExpenses}
+            expensesCount={expensesCount}
+            totalPaid={totalPaid}
+            paidCount={paidCount}
+            totalPending={totalPending}
+            PendingCount={pendingCount}
+          />
+          
+          <TransactionsTable 
+            filterTransactions={filteredTransactions}
+            categoryTableHeader={categoryTableHeader}
+            setCategoryTableHeader={setCategoryTableHeader}
+            monthTableFilter={monthTableFilter}
+            setMonthTableFilter={setMonthTableFilter}
+            startDate={startDate}
+            setStartDate={setStartDate}
+            endDate={endDate}
+            setEndDate={setEndDate}
+            categoryOptions={categoryOptions}
+            monthOptions={monthOptions}
+          />
           <RelatoryButtons />
           <PastelCards />
           <ChartsSection />
