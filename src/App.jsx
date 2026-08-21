@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import {useState} from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KpiCards from './components/KpiCards';
@@ -63,6 +63,14 @@ const initialTransactions = [
     valor: "R$ 2.000,00",
     status: "Pago",
   },
+  {
+    id: 5,
+    vencimento: "2026-08-30",
+    fornecedor: "Agrohara",
+    categoria: "Sementes",
+    valor: "R$3.250,00",
+    status: "Pendente",
+  }
 ];
 
 const parseCurrency = (valueString) => {
@@ -78,6 +86,8 @@ export default function App() {
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
 
   const filteredTransactions = initialTransactions.filter((transaction) => {
     if (!transaction) return false;
@@ -102,6 +112,10 @@ export default function App() {
     }
 
     if (endDate && transaction.vencimento > endDate) {
+      return false;
+    }
+
+    if(selectedCardStatus !== "Todos" && transaction.status !== selectedCardStatus){
       return false;
     }
 
@@ -138,9 +152,11 @@ export default function App() {
             totalPaid={totalPaid}
             paidCount={paidCount}
             totalPending={totalPending}
-            PendingCount={pendingCount}
+            pendingCount={pendingCount}
+            selectedCardStatus={selectedCardStatus}
+            setSelectedCardStatus={setSelectedCardStatus}
           />
-          
+
           <TransactionsTable 
             filterTransactions={filteredTransactions}
             categoryTableHeader={categoryTableHeader}

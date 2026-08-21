@@ -1,4 +1,3 @@
-import React from "react";
 import { CheckCircle2, AlertTriangle, ChartNoAxesCombined } from "lucide-react";
 
 export default function KpiCards({
@@ -7,7 +6,9 @@ export default function KpiCards({
   totalPaid = 0,
   paidCount = 0,
   totalPending = 0,
-  PendingCount = 0,
+  pendingCount = 0,
+  selectedCardStatus = "Todos",
+  setSelectedCardStatus,
 }) {
   //Vai receber o valor e vai formatar em real
   const formatCurrency = (val) =>
@@ -17,10 +18,17 @@ export default function KpiCards({
     // Conteiner with all KPI cards
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
       {/* Card Total de Gastos */}
-      <div className="bg-white p-5 rounded-xl border-2 border-transparent hover:border-purple-900/40 shadow-sm relative transition-all duration-300 hover:scale-105 hover:z-10 hover: cursor-pointer">
+      <div
+      onClick={() => setSelectedCardStatus("Todos")}
+       className={`bg-white p-5 rounded-xl border-2 border-transparent hover:border-purple-900/40 shadow-sm relative transition-all duration-300 hover:scale-105 hover:z-10 hover: cursor-pointer ${
+        selectedCardStatus === "Todos"
+          ? "border-purple-600 shadow-md"
+          : "border-transparent hover:border-purple-900/40"
+       }`}
+       >
         <div className="flex justify-between items-center">
           <span className="text-xs text-gray-500 font-medium w-fit">
-            <p className="cursor-text">Total de Gastos (Mês)</p>
+            <p className="cursor-text">Total de Gastos na Tabela</p>
           </span>
           <ChartNoAxesCombined className="w-4 h-4 text-purple-600" />
         </div>
@@ -33,7 +41,14 @@ export default function KpiCards({
       </div>
 
       {/* Card Contas Pagas */}
-      <div className="bg-white p-5 rounded-xl border-gray-100 border-2 border-transparent hover:border-emerald-600/40 shadow-sm cursor-pointer transition-all duration-300 hover:scale-105">
+      <div
+        onClick={() => setSelectedCardStatus("Pago")}
+        className={`bg-white p-5 rounded-xl border-gray-100 border-2 border-transparent hover:border-emerald-600/40 shadow-sm transition-all duration-300 hover:scale-105 cursor-pointer ${
+          selectedCardStatus === "Pago"
+            ? "border-emerald-600 shadow-md"
+            : "border-transparent hover:border-emerald-600/40"
+        }`}
+        >
         <div className="flex justify-between items-center">
           <span className="text-xs text-gray-500 font-medium w-fit">
             <p className="cursor-text">Contas Pagas</p>
@@ -49,7 +64,14 @@ export default function KpiCards({
       </div>
 
       {/* Card Contas Pendentes*/}
-      <div className="bg-white p-5 rounded-xl border-gray-100 border-2 border-transparent hover:border-amber-600/40 shadow-sm cursor-pointer transition-all duration-300 hover:scale-105">
+      <div
+        onClick={() => setSelectedCardStatus("Pendente")}
+        className={`bg-white p-5 rounded-xl border-gray-100 border-2 border-transparent hover:border-amber-600/40 shadow-sm transition-all duration-300 hover:scale-105 cursor-pointer ${
+          selectedCardStatus === "Pendente"
+            ? "border-amber-600 shadow-md"
+            : "border-transparent hover:border-amber-600/40"
+      }`}
+      >
         <div className="flex justify-between items-center">
           <span className="text-xs text-gray-500 font-medium w-fit">
             <p className="cursor-text">Contas Pendentes</p>
@@ -60,7 +82,7 @@ export default function KpiCards({
           <p className="cursor-text">{formatCurrency(totalPending)}</p>
         </div>
         <span className="text-xs text-amber-600 font-medium mt-2 block w-fit">
-          <p className="cursor-text">{PendingCount} Fatura(s) a pagar</p>
+          <p className="cursor-text">{pendingCount} Fatura(s) a pagar</p>
         </span>
       </div>
     </div>

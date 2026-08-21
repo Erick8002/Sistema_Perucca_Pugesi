@@ -92,7 +92,7 @@ const getTransactionStatus = (item) => {
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 space-y-reverse">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <h2 className="text-base font-bold text-gray-800 ">
-          Todos os Gastos do Mês
+          Todos os Gastos
         </h2>
 
         <div className="flex items-center gap-2 flex-1 max-w-3xl">
