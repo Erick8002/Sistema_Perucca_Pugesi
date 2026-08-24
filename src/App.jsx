@@ -55,7 +55,7 @@ const initialTransactions = [
     valor: "R$ 2.300,00",
     status: "Pendente",
   },
-  {
+  { 
     id: 4,
     vencimento: "2026-07-17",
     fornecedor: "Fertilizantes AgroTech",

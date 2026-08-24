@@ -12,7 +12,7 @@ export default function KpiCards({
 }) {
   //Vai receber o valor e vai formatar em real
   const formatCurrency = (val) =>
-    val.toLocaleString("pr-BR", { style: "currency", currency: "BRL" });
+    val.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
   return (
     // Conteiner with all KPI cards
@@ -20,9 +20,9 @@ export default function KpiCards({
       {/* Card Total de Gastos */}
       <div
       onClick={() => setSelectedCardStatus("Todos")}
-       className={`bg-white p-5 rounded-xl border-2 border-transparent hover:border-purple-900/40 shadow-sm relative transition-all duration-300 hover:scale-105 hover:z-10 hover: cursor-pointer ${
+       className={`bg-white p-5 rounded-xl border-2 shadow-sm transition-all duration-300 hover:scale-105 cursor-pointer ${
         selectedCardStatus === "Todos"
-          ? "border-purple-600 shadow-md"
+          ? "border-purple-600 shadow-md ring-1 ring-purple-400"
           : "border-transparent hover:border-purple-900/40"
        }`}
        >
@@ -43,9 +43,9 @@ export default function KpiCards({
       {/* Card Contas Pagas */}
       <div
         onClick={() => setSelectedCardStatus("Pago")}
-        className={`bg-white p-5 rounded-xl border-gray-100 border-2 border-transparent hover:border-emerald-600/40 shadow-sm transition-all duration-300 hover:scale-105 cursor-pointer ${
+        className={`bg-white p-5 rounded-xl border-2 shadow-sm transition-all duration-300 hover:scale-105 cursor-pointer ${
           selectedCardStatus === "Pago"
-            ? "border-emerald-600 shadow-md"
+            ? "border-emerald-600 shadow-md ring-1 ring-emerald-400"
             : "border-transparent hover:border-emerald-600/40"
         }`}
         >
@@ -66,9 +66,9 @@ export default function KpiCards({
       {/* Card Contas Pendentes*/}
       <div
         onClick={() => setSelectedCardStatus("Pendente")}
-        className={`bg-white p-5 rounded-xl border-gray-100 border-2 border-transparent hover:border-amber-600/40 shadow-sm transition-all duration-300 hover:scale-105 cursor-pointer ${
+        className={`bg-white p-5 rounded-xl border-2 shadow-sm transition-all duration-300 hover:scale-105 cursor-pointer ${
           selectedCardStatus === "Pendente"
-            ? "border-amber-600 shadow-md"
+            ? "border-amber-600 shadow-md "
             : "border-transparent hover:border-amber-600/40"
       }`}
       >
