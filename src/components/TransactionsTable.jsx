@@ -17,6 +17,8 @@ export default function TransactionsTable({
   categoryOptions,
   monthOptions,
 }) {
+  const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
+  const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
   const handleMonthSelect = (selectedMonth) => {
@@ -55,6 +57,10 @@ export default function TransactionsTable({
     }
   }, [startDate, endDate, monthTableFilter, monthOptions, setMonthTableFilter]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryTableHeader, monthTableFilter, startDate, endDate, filterTransactions]);
+
   const sortedTransactions = [...filterTransactions].sort((b, a) => {
     return a.vencimento.localeCompare(b.vencimento);
   });
@@ -65,7 +71,7 @@ export default function TransactionsTable({
     Atrasado: "bg-rose-100 text-rose-700",
   };
 
-const getTransactionStatus = (item) => {
+  const getTransactionStatus = (item) => {
     if (item.status === "Pago") return "Pago";
 
     const today = new Date();
@@ -87,6 +93,14 @@ const getTransactionStatus = (item) => {
 
     return "Pendente";
   };
+
+  const totalItems = sortedTransactions.length; // Pega a quantidade total de items que possui na tabela
+  const startItems = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1; // Serve para verificar quantas páginas inteiras já ficaram para trás, sempre retornando 1, 11, 21...
+  const endItems = Math.min(currentPage * itemsPerPage, totalItems); // O Math.min compara o menor número entre os dois parâmetros dentro dele, se tornando uma "trava de segurança"
+  const indexOfLastItem = currentPage * itemsPerPage; // Pega o índice do último item da página
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage; // Pega o índice do primeiro item da página
+  const currentTransactions = sortedTransactions.slice(indexOfFirstItem, indexOfLastItem); // Pega as transações que estão na página atual
+  const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 space-y-reverse">
@@ -169,7 +183,7 @@ const getTransactionStatus = (item) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 text-gray-700">
-            {sortedTransactions.map((item) => {
+            {currentTransactions.map((item) => {
               const currentStatus = getTransactionStatus(item);
 
               return (
@@ -203,15 +217,54 @@ const getTransactionStatus = (item) => {
       </div>
 
       <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-gray-50">
-        <span>Mostrando 1-10 de {sortedTransactions.length} lançamentos</span>
+        <span>Mostrando {sortedTransactions.length === 0 ? 0: indexOfFirstItem + 1} - {Math.min(indexOfLastItem, sortedTransactions.length)} de {sortedTransactions.length} lançamentos</span>
         <div className="flex items-center gap-1">
-          <span>‹</span> <span className="font-bold text-gray-700">1</span>{" "}
-          <span>2</span> <span>3</span> <span>›</span>
+          <button
+            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            disabled={currentPage === 1}
+            className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
+          > 
+            ‹
+          </button>
+
+          {Array.from({ length: totalPages }, (_, index) => {
+            const pageNumber = index + 1;
+            return (
+              <button
+                key={pageNumber}
+                onClick={() => setCurrentPage(pageNumber)}
+                className={`px-2.5 py-1 text-xs rounded-ms transition-colors ${
+                  currentPage === pageNumber
+                    ? "bg-purple-600 text-white font-semibold rounded"
+                    : "text-gray-600 hover:bg-gray-100"
+                }`}
+              >
+                {pageNumber}
+              </button>
+            )
+          })}
+
+          <button
+            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            disabled={currentPage === totalPages || totalPages === 0}
+            className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
+          >
+            ›
+          </button>
         </div>
         <div>
           Itens por página:{" "}
-          <select className="bg-transparent border rounded text-[11px]">
-            <option>10</option>
+          <select
+            value={itemsPerPage}onChange={(e) => {
+              setItemsPerPage(Number(e.target.value));
+              setCurrentPage(1);
+            }}            
+            className="bg-transparent border rounded text-[11px]">
+            <option value={1}>1</option>
+            <option value={5}>5</option>
+            <option value={10}>10</option>
+            <option value={20}>20</option>
+            <option value={50}>50</option>
           </select>
         </div>
       </div>
