@@ -36,7 +36,7 @@ const initialTransactions = [
     vencimento: "2026-08-08",
     fornecedor: "Agrofértil Insumos",
     categoria: "Fertilizantes",
-    valor: "R$ 4.500,00",
+    valor: "4.500,00",
     status: "Pago",
   },
   {
@@ -44,7 +44,7 @@ const initialTransactions = [
     vencimento: "2026-08-10",
     fornecedor: "MaqCampo Peças e Manutenção",
     categoria: "Defensivos",
-    valor: "R$ 1.580,00",
+    valor: "1.580,00",
     status: "Pendente",
   },
   {
@@ -52,7 +52,7 @@ const initialTransactions = [
     vencimento: "2026-08-17",
     fornecedor: "Sementes AgroTech",
     categoria: "Sementes",
-    valor: "R$ 2.300,00",
+    valor: "2.300,00",
     status: "Pendente",
   },
   { 
@@ -60,7 +60,7 @@ const initialTransactions = [
     vencimento: "2026-07-17",
     fornecedor: "Fertilizantes AgroTech",
     categoria: "Fertilizantes",
-    valor: "R$ 2.000,00",
+    valor: "2.000,00",
     status: "Pago",
   },
   {
@@ -68,7 +68,7 @@ const initialTransactions = [
     vencimento: "2026-08-30",
     fornecedor: "Agrohara",
     categoria: "Sementes",
-    valor: "R$3.250,00",
+    valor: "3.250,00",
     status: "Pendente",
   }
 ];

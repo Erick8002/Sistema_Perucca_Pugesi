@@ -160,12 +160,12 @@ const getTransactionStatus = (item) => {
         <table className="w-full text-left text-xs">
           <thead>
             <tr className="border-b border-gray-100 text-gray-400 font-medium">
-              <th className="pb-3 font-medium">Vencimento</th>
-              <th className="pb-3 font-medium">Fornecedor</th>
-              <th className="pb-3 font-medium">Categoria</th>
-              <th className="pb-3 font-medium">Valor</th>
-              <th className="pb-3 font-medium">Status</th>
-              <th className="pb-3 font-medium text-right pr-4">Ações</th>
+              <th className="pb-3 w-1/6 font-medium">Vencimento</th>
+              <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
+              <th className="pb-3 w-1/6 font-medium">Categoria</th>
+              <th className="pb-3 w-1/6 font-medium">Valor</th>
+              <th className="pb-3 w-1/6 font-medium">Status</th>
+              <th className="pb-3 font-medium text-right pr-3">Ações</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 text-gray-700">
@@ -181,7 +181,7 @@ const getTransactionStatus = (item) => {
                     {item.fornecedor}
                   </td>
                   <td className="py-3 text-gray-500">{item.categoria}</td>
-                  <td className="py-3 font-semibold">{item.valor}</td>
+                  <td className="py-3 font-semibold">R$ {item.valor}</td>
                   <td className="py-3">
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${

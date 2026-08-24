@@ -33,7 +33,7 @@ export function ActionMenu({ item }) {
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-10 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-left text-xs">
+        <div className="absolute right-10 top-1 w-44 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1 text-left text-xs ">
           <button 
             onClick={() => setIsOpen(false)}
             className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
