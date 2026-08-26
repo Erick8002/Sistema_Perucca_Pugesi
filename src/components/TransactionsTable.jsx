@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import CustomSelect from "./CustomSelect";
 import { DateInput } from "./DateInput";
-import { Search, FileText, Plus } from "lucide-react";
-import {ActionMenu} from "./ActionMenu";
+import { ActionMenu } from "./ActionMenu";
+import { NewTransactionModal } from "./NewTransactionModal";
+import { Search, FileText, Plus, BetweenHorizonalEnd } from "lucide-react";
 
 export default function TransactionsTable({
   filterTransactions,
@@ -19,7 +20,91 @@ export default function TransactionsTable({
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [transactions, setTransactions] = useState(() => {
+    try {
+      const savedData = localStorage.getItem('@finance:transactions');
+      if(savedData && savedData !== 'undefined' && savedData !== 'null') {
+        return JSON.parse(savedData);
+      }
+    } catch (error) {
+      console.error('Erro ao ler do localStorage: ', error)
+    }
+    return [
+      {
+        id: 1,
+        vencimento: "2026-08-08",
+        fornecedor: "Agrofértil Insumos",
+        categoria: "Fertilizantes",
+        valor: "4.500,00",
+        status: "Pago",
+      },
+      {
+        id: 2,
+        vencimento: "2026-08-10",
+        fornecedor: "MaqCampo Peças e Manutenção",
+        categoria: "Defensivos",
+        valor: "1.580,00",
+        status: "Pendente",
+      },
+      {
+        id: 3,
+        vencimento: "2026-08-17",
+        fornecedor: "Sementes AgroTech",
+        categoria: "Sementes",
+        valor: "2.300,00",
+        status: "Pendente",
+      },
+      {
+        id: 4,
+        vencimento: "2026-07-17",
+        fornecedor: "Fertilizantes AgroTech",
+        categoria: "Fertilizantes",
+        valor: "2.000,00",
+        status: "Pago",
+      },
+      {
+        id: 5,
+        vencimento: "2026-08-30",
+        fornecedor: "Agrohara",
+        categoria: "Sementes",
+        valor: "3.250,00",
+        status: "Pendente",
+      },
+    ];
+  })
+
+  useEffect(() => {
+    localStorage.setItem('@finance:transactions', JSON.stringify(transactions));
+  }, [transactions]);
+
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
+
+  const handleSaveTransaction = (newTransaction) => {
+    const rawDate = newTransaction.vencimento || newTransaction.dueDate;
+    const validDate = rawDate ? rawDate : new Date().toISOString().split("T")[0];
+    
+    const maxId = transactions.length > 0
+      ? Math.max(...transactions.map((item) => Number(item.id) || 0))
+      : 0;
+
+    const createdTransaction = {
+      id: maxId + 1,
+      vencimento: validDate,
+      fornecedor: newTransaction.fornecedor || newTransaction.provider,
+      categoria: newTransaction.categoria || newTransaction.categoryOptions,
+      valor: newTransaction.valor || newTransaction.value || "0,00",
+      status: newTransaction.status === "Pago" || newTransaction.status === "paid" ? "Pago" : "Pendente",
+    };
+
+    setTransactions((prev) => [createdTransaction, ...prev]);
+    setIsModalOpen(false);
+    setCurrentPage(1);
+  }
+
+  const handleDeleteTransaction = (idToDelete) => {
+    setTransactions((prev) => prev.filter((item) => item.id !== idToDelete));
+  };
 
   const handleMonthSelect = (selectedMonth) => {
     setMonthTableFilter(selectedMonth);
@@ -61,7 +146,10 @@ export default function TransactionsTable({
     setCurrentPage(1);
   }, [categoryTableHeader, monthTableFilter, startDate, endDate, filterTransactions]);
 
-  const sortedTransactions = [...filterTransactions].sort((b, a) => {
+  const dataToSort = filterTransactions && filterTransactions.length > 0 ? filterTransactions : transactions;
+
+  const sortedTransactions = [...(dataToSort || [])].sort((b, a) => {
+    if(!a?.vencimento || !b?.vencimento) return 0;
     return a.vencimento.localeCompare(b.vencimento);
   });
 
@@ -127,9 +215,17 @@ export default function TransactionsTable({
             />
           </div>
 
-          <button className="bg-[#4A2E56] hover:bg-[#382242] text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0">
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-[#4A2E56] hover:bg-[#382242] text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0">
             <Plus className="w-3.5 h-3.5" /> Novo Gasto
           </button>
+
+          <NewTransactionModal
+            isOpen={isModalOpen}
+            onClose={() => setIsModalOpen(false)}
+            onSave={handleSaveTransaction}
+          />
         </div>
       </div>
 
