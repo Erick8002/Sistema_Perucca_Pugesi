@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import { useEffect, useState } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import KpiCards from './components/KpiCards';
@@ -75,12 +75,31 @@ const initialTransactions = [
 
 const parseCurrency = (valueString) => {
   if(!valueString) return 0;
-  const numericString = valueString.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
+  const normalizedValue = String(valueString).replace("R$", "").replace(/\s/g, "").trim();
+  const numericString = normalizedValue.includes(",")
+    ? normalizedValue.replace(/\./g, "").replace(",", ".")
+    : normalizedValue;
   return parseFloat(numericString) || 0;
 };
 
 export default function App() {
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
+
+  const [transactions, setTransactions] = useState(() => {
+    try {
+      const savedData = localStorage.getItem('@finance:transactions');
+      if(savedData && savedData !== 'undefined' && savedData !== 'null') {
+        return JSON.parse(savedData);
+      }
+    } catch (error) {
+      console.error('Erro ao ler do localStorage: ', error);
+    }
+    return initialTransactions;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('@finance:transactions', JSON.stringify(transactions));
+  }, [transactions]);
 
   const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
@@ -89,7 +108,7 @@ export default function App() {
 
   const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
 
-  const filteredTransactions = initialTransactions.filter((transaction) => {
+  const filteredTransactions = transactions.filter((transaction) => {
     if (!transaction) return false;
 
     const category = categoryTableHeader === "Todas as Categorias" || transaction.categoria?.includes(categoryTableHeader);
@@ -159,6 +178,8 @@ export default function App() {
 
           <TransactionsTable 
             filterTransactions={filteredTransactions}
+            transactions={transactions}
+            setTransactions={setTransactions}
             categoryTableHeader={categoryTableHeader}
             setCategoryTableHeader={setCategoryTableHeader}
             monthTableFilter={monthTableFilter}

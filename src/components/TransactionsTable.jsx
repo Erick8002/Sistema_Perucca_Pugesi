@@ -7,6 +7,8 @@ import { Search, FileText, Plus, BetweenHorizonalEnd } from "lucide-react";
 
 export default function TransactionsTable({
   filterTransactions,
+  transactions,
+  setTransactions,
   categoryTableHeader,
   setCategoryTableHeader,
   monthTableFilter,
@@ -22,62 +24,6 @@ export default function TransactionsTable({
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const savedData = localStorage.getItem('@finance:transactions');
-      if(savedData && savedData !== 'undefined' && savedData !== 'null') {
-        return JSON.parse(savedData);
-      }
-    } catch (error) {
-      console.error('Erro ao ler do localStorage: ', error)
-    }
-    return [
-      {
-        id: 1,
-        vencimento: "2026-08-08",
-        fornecedor: "Agrofértil Insumos",
-        categoria: "Fertilizantes",
-        valor: "4.500,00",
-        status: "Pago",
-      },
-      {
-        id: 2,
-        vencimento: "2026-08-10",
-        fornecedor: "MaqCampo Peças e Manutenção",
-        categoria: "Defensivos",
-        valor: "1.580,00",
-        status: "Pendente",
-      },
-      {
-        id: 3,
-        vencimento: "2026-08-17",
-        fornecedor: "Sementes AgroTech",
-        categoria: "Sementes",
-        valor: "2.300,00",
-        status: "Pendente",
-      },
-      {
-        id: 4,
-        vencimento: "2026-07-17",
-        fornecedor: "Fertilizantes AgroTech",
-        categoria: "Fertilizantes",
-        valor: "2.000,00",
-        status: "Pago",
-      },
-      {
-        id: 5,
-        vencimento: "2026-08-30",
-        fornecedor: "Agrohara",
-        categoria: "Sementes",
-        valor: "3.250,00",
-        status: "Pendente",
-      },
-    ];
-  })
-
-  useEffect(() => {
-    localStorage.setItem('@finance:transactions', JSON.stringify(transactions));
-  }, [transactions]);
 
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
@@ -94,7 +40,7 @@ export default function TransactionsTable({
       vencimento: validDate,
       fornecedor: newTransaction.fornecedor || newTransaction.provider,
       categoria: newTransaction.categoria || newTransaction.categoryOptions,
-      valor: newTransaction.valor || newTransaction.value || "0,00",
+      valor: newTransaction.valor ?? newTransaction.value ?? 0,
       status: newTransaction.status === "Pago" || newTransaction.status === "paid" ? "Pago" : "Pendente",
     };
 
@@ -165,6 +111,19 @@ export default function TransactionsTable({
   });
 
   const dataToSort = filteredTransactions;
+
+  const formatCurrency = (value) => {
+    const valueAsString = String(value ?? "0").replace("R$", "").replace(/\s/g, "").trim();
+    const normalizedValue = valueAsString.includes(",")
+      ? valueAsString.replace(/\./g, "").replace(",", ".")
+      : valueAsString;
+    const numericValue = Number(normalizedValue) || 0;
+
+    return numericValue.toLocaleString("pt-BR", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
 
   const sortedTransactions = [...(dataToSort || [])].sort((b, a) => {
     if(!a?.vencimento || !b?.vencimento) return 0;
@@ -311,7 +270,7 @@ export default function TransactionsTable({
                     {item.fornecedor}
                   </td>
                   <td className="py-3 text-gray-500">{item.categoria}</td>
-                  <td className="py-3 font-semibold">R$ {item.valor}</td>
+                  <td className="py-3 font-semibold">R$ {formatCurrency(item.valor)}</td>
                   <td className="py-3">
                     <span
                       className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${

@@ -8,6 +8,27 @@ const categoryOptions = [
     "Sementes",
 ];
 
+const parseCurrencyInput = (value) => {
+    const normalizedValue = String(value)
+      .replace(/R\$/gi, "")
+      .trim()
+      .replace(/\s/g, "");
+    if (!normalizedValue) return 0;
+
+    let valueWithDecimalSeparator = normalizedValue;
+
+    if (normalizedValue.includes(",")) {
+      valueWithDecimalSeparator = normalizedValue.replace(/\./g, "").replace(",", ".");
+    } else if ((normalizedValue.match(/\./g) || []).length > 1) {
+      const lastDotIndex = normalizedValue.lastIndexOf(".");
+      valueWithDecimalSeparator = `${normalizedValue.slice(0, lastDotIndex).replace(/\./g, "")}${normalizedValue.slice(lastDotIndex)}`;
+    } else if (/^\d+\.\d{3}$/.test(normalizedValue)) {
+      valueWithDecimalSeparator = normalizedValue.replace(".", "");
+    }
+
+    return Number(valueWithDecimalSeparator) || 0;
+};
+
 export function NewTransactionModal({ isOpen, onClose, onSave}) {
     const selectRef = useRef(null);
 
@@ -57,10 +78,17 @@ export function NewTransactionModal({ isOpen, onClose, onSave}) {
             return;
         }
 
+        const parsedValue = parseCurrencyInput(formData.valor);
+
+        if (parsedValue <= 0) {
+            alert('Informe um valor válido maior que zero.');
+            return;
+        }
+
         onSave({
           ...formData,
           categoria: categoria,
-          valor: Number(formData.valor)
+          valor: parsedValue
         });
 
         setFormaData({
@@ -142,8 +170,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave}) {
                   Valor (R$)
                 </label>
                 <input
-                  type="number"
-                  step="0.01"
+                  type="text"
+                  inputMode="decimal"
                   name="valor"
                   value={formData.valor}
                   onChange={handleChange}
