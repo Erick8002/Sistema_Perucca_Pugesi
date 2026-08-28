@@ -20,6 +20,7 @@ export default function TransactionsTable({
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
+  const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [transactions, setTransactions] = useState(() => {
     try {
@@ -144,9 +145,26 @@ export default function TransactionsTable({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryTableHeader, monthTableFilter, startDate, endDate, filterTransactions]);
+  }, [categoryTableHeader, monthTableFilter, startDate, endDate, filterTransactions, searchTerm]);
 
-  const dataToSort = filterTransactions && filterTransactions.length > 0 ? filterTransactions : transactions;
+  const dataToFilter = Array.isArray(filterTransactions) ? filterTransactions : transactions;
+  const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
+  const filteredTransactions = dataToFilter.filter((item) => {
+    if (!normalizedSearchTerm) return true;
+
+    return [
+      item.fornecedor,
+      item.fatura,
+      item.categoria,
+      item.vencimento,
+      item.valor,
+      item.status,
+    ].some((value) =>
+      String(value ?? "").toLocaleLowerCase().includes(normalizedSearchTerm)
+    );
+  });
+
+  const dataToSort = filteredTransactions;
 
   const sortedTransactions = [...(dataToSort || [])].sort((b, a) => {
     if(!a?.vencimento || !b?.vencimento) return 0;
@@ -202,6 +220,8 @@ export default function TransactionsTable({
             <input
               type="text"
               placeholder="Pesquisar por fornecedor ou fatura..."
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
               className="w-full bg-gray-50 border border-gray-200 rounded-md pl-3 pr-8 py-1.5 text-xs focus:outline-none focus:border-purple-500"
             />
             <Search className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-2" />
