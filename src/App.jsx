@@ -162,8 +162,8 @@ export default function App() {
     <div className="flex min-h-screen bg-[#F4F4F6] text-gray-800 font-sans">
       <Sidebar />
 
-      <main className="flex-1 p-8 overflow-y-auto">
-        <div className="max-w-6xl mx-auto space-y-6">
+      <main id="dashboard" className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <div className="mx-auto max-w-6xl space-y-6">
           <Header />
           <KpiCards 
             totalExpenses={totalExpenses}
@@ -193,7 +193,9 @@ export default function App() {
           />
           <RelatoryButtons />
           <PastelCards />
-          <ChartsSection />
+          <div id="charts">
+            <ChartsSection />
+          </div>
         </div>
       </main>
     </div>

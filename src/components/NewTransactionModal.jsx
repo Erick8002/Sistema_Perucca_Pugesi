@@ -106,7 +106,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave}) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
         {/* Container do Modal */}
-        <div ref={selectRef} className="w-full max-w-2xl rounded-2xl bg-white p-6 shadow-2xl transition-all">
+        <div ref={selectRef} className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl transition-all sm:p-6">
           {/* Cabeçalho */}
           <div className="flex items-start justify-between border-b border-gray-100 pb-4">
             <div>

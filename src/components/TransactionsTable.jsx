@@ -168,7 +168,7 @@ export default function TransactionsTable({
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6 space-y-reverse">
+    <div id="transactions" className="scroll-mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <h2 className="text-base font-bold text-gray-800 ">
           Todos os Gastos
@@ -208,7 +208,7 @@ export default function TransactionsTable({
         </div>
       </div>
 
-      <div className="flex items-center gap-3 text-xs text-gray-500">
+      <div className="flex flex-col items-stretch gap-3 text-xs text-gray-500 sm:flex-row sm:items-center">
         <div className="p-2">
           <CustomSelect
             options={monthOptions}
@@ -218,16 +218,18 @@ export default function TransactionsTable({
           />
         </div>
         <div className="flex items-center gap-2">
-          <DateInput
-            value={startDate}
-            onChange={handleStartDateChange}
-            placeholder={"Data Inicial"}
-          />
-          <DateInput
-            value={endDate}
-            onChange={handleEndDateChange}
-            placeholder={"Data Final"}
-          />
+          <div className="flex flex-wrap items-center gap-2">
+            <DateInput
+              value={startDate}
+              onChange={handleStartDateChange}
+              placeholder={"Data Inicial"}
+            />
+            <DateInput
+              value={endDate}
+              onChange={handleEndDateChange}
+              placeholder={"Data Final"}
+            />
+          </div>
 
           {(startDate || endDate || monthTableFilter !== monthOptions[0]) && (
             <button
@@ -245,8 +247,8 @@ export default function TransactionsTable({
         </div>
       </div>
 
-      <div>
-        <table className="w-full text-left text-xs">
+      <div className="overflow-x-auto rounded-lg border border-gray-100">
+        <table className="min-w-[720px] w-full text-left text-xs">
           <thead>
             <tr className="border-b border-gray-100 text-gray-400 font-medium">
               <th className="pb-3 w-1/6 font-medium">Vencimento</th>
@@ -258,7 +260,14 @@ export default function TransactionsTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50 text-gray-700">
-            {currentTransactions.map((item) => {
+            {currentTransactions.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="py-10 text-center text-gray-400">
+                  <FileText className="mx-auto mb-2 h-5 w-5" />
+                  Nenhum lançamento encontrado.
+                </td>
+              </tr>
+            ) : currentTransactions.map((item) => {
               const currentStatus = getTransactionStatus(item);
 
               return (
@@ -291,7 +300,7 @@ export default function TransactionsTable({
         </table>
       </div>
 
-      <div className="flex justify-between items-center text-[11px] text-gray-400 pt-2 border-t border-gray-50">
+      <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 pt-2 border-t border-gray-50">
         <span>Mostrando {sortedTransactions.length === 0 ? 0: indexOfFirstItem + 1} - {Math.min(indexOfLastItem, sortedTransactions.length)} de {sortedTransactions.length} lançamentos</span>
         <div className="flex items-center gap-1">
           <button
