@@ -168,7 +168,7 @@ export default function TransactionsTable({
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
   return (
-    <div id="transactions" className="scroll-mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
         <h2 className="text-base font-bold text-gray-800 ">
           Todos os Gastos
