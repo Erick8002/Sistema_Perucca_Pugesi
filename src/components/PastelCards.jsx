@@ -139,18 +139,22 @@ export default function PastelCards({ transactions = [] }) {
     amber: {
       card: 'border-amber-100/60 bg-[#FAF5EE]',
       chevron: 'text-amber-700',
+      panel: 'border-amber-100 bg-[#FFF9F4]',
     },
     purple: {
       card: 'border-purple-100/60 bg-[#F3EFEF]',
       chevron: 'text-purple-700',
+      panel: 'border-purple-100 bg-[#F9F5FF]',
     },
     blue: {
       card: 'border-blue-100/60 bg-[#EBF3F5]',
       chevron: 'text-blue-600',
+      panel: 'border-blue-100 bg-[#F3FAFD]',
     },
     emerald: {
       card: 'border-emerald-100/60 bg-[#EBF5EF]',
       chevron: 'text-emerald-600',
+      panel: 'border-emerald-100 bg-[#F5FBF7]',
     },
   };
 
@@ -172,12 +176,12 @@ export default function PastelCards({ transactions = [] }) {
                   className={`relative min-h-[170px] cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5 ${tones[style].card}`}
                 >
                   <div className="flex items-center justify-between gap-2 text-[11px] text-gray-500 sm:text-xs">
-                    <span className="leading-snug">{title}</span>
+                    <span className="leading-snug font-medium text-gray-600">{title}</span>
                     <label
                       onClick={(event) => event.stopPropagation()}
-                      className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white/80 px-1.5 py-1 shadow-[0_1px_3px_rgba(109,40,217,0.08)] transition-all duration-200 hover:border-purple-300 hover:shadow-[0_2px_8px_rgba(109,40,217,0.12)] focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100"
+                      className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white/85 px-1.5 py-1 shadow-[0_1px_3px_rgba(109,40,217,0.08)] transition-all duration-200 hover:border-purple-300 hover:shadow-[0_2px_8px_rgba(109,40,217,0.12)] focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100"
                     >
-                      <span className="text-[9px] font-bold tracking-[0.04em] text-purple-700">R$</span>
+                      <span className="text-[9px] font-bold tracking-[0.08em] text-purple-700">R$</span>
                       <input
                         type="number"
                         min="0"
@@ -193,7 +197,7 @@ export default function PastelCards({ transactions = [] }) {
                     {formatCurrency(value)}
                   </div>
 
-                  <p className="mt-2 text-[10px] leading-relaxed text-gray-400 sm:text-xs">
+                  <p className="mt-2 text-[10px] leading-relaxed text-gray-500 sm:text-xs">
                     {subtitle}
                   </p>
 
@@ -205,24 +209,24 @@ export default function PastelCards({ transactions = [] }) {
                 </div>
 
                 {isExpanded && (
-                  <div className="rounded-xl border border-purple-100 bg-white/80 p-3 shadow-sm">
-                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                  <div className={`rounded-xl border border-white/60 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm ${tones[style].panel}`}>
+                    <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-500 opacity-90">
                       Faturas relacionadas
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-2.5">
                       {details.length === 0 ? (
-                        <p className="text-[10px] text-gray-400">Nenhuma fatura encontrada.</p>
+                        <p className="text-[11px] text-gray-400 italic">Nenhuma fatura encontrada.</p>
                       ) : (
                         details.map((item) => (
                           <div
                             key={item.id}
-                            className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5 text-[10px] text-gray-600"
+                            className="flex items-center justify-between gap-3 rounded-lg border border-white/60 bg-white/85 px-3 py-2.5 text-[11px] text-gray-600 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all duration-150 hover:border-white/80 hover:bg-white/90 hover:shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
                           >
                             <div className="min-w-0">
-                              <p className="truncate font-medium text-gray-700">{item.fornecedor}</p>
-                              <p className="text-[9px] text-gray-400">{item.vencimento}</p>
+                              <p className="truncate text-[12px] font-medium text-gray-800">{item.fornecedor}</p>
+                              <p className="mt-0.5 text-[10px] text-gray-400">{item.vencimento}</p>
                             </div>
-                            <span className="shrink-0 font-semibold text-gray-800">
+                            <span className="shrink-0 text-[12px] font-semibold text-gray-900">
                               {formatCurrency(parseCurrency(item.valor))}
                             </span>
                           </div>
@@ -241,13 +245,13 @@ export default function PastelCards({ transactions = [] }) {
                 onClick={() => toggleCard(title)}
                 className={`relative min-h-[170px] cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5 ${tones[style].card}`}
               >
-                <span className="block text-[11px] text-gray-500 sm:text-xs">{title}</span>
+                <span className="block text-[11px] font-medium text-gray-600 sm:text-xs">{title}</span>
 
                 <div className="mt-2 text-[clamp(1.05rem,2vw,1.5rem)] font-bold leading-tight text-gray-800">
                   {formatCurrency(value)}
                 </div>
 
-                <p className="mt-2 text-[10px] leading-relaxed text-gray-400 sm:text-xs">
+                <p className="mt-2 text-[10px] leading-relaxed text-gray-500 sm:text-xs">
                   {subtitle}
                 </p>
 
@@ -259,24 +263,24 @@ export default function PastelCards({ transactions = [] }) {
               </div>
 
               {isExpanded && (
-                <div className="rounded-xl border border-gray-200 bg-white/80 p-3 shadow-sm">
-                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                <div className={`rounded-xl border border-white/60 p-4 shadow-[0_8px_24px_rgba(15,23,42,0.06)] backdrop-blur-sm ${tones[style].panel}`}>
+                  <div className="mb-3 text-[10px] font-semibold uppercase tracking-[0.15em] text-gray-500 opacity-90">
                     Faturas relacionadas
                   </div>
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     {details.length === 0 ? (
-                      <p className="text-[10px] text-gray-400">Nenhuma fatura encontrada.</p>
+                      <p className="text-[11px] text-gray-400 italic">Nenhuma fatura encontrada.</p>
                     ) : (
                       details.map((item) => (
                         <div
                           key={item.id}
-                          className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5 text-[10px] text-gray-600"
+                          className="flex items-center justify-between gap-3 rounded-lg border border-white/60 bg-white/85 px-3 py-2.5 text-[11px] text-gray-600 shadow-[0_1px_3px_rgba(0,0,0,0.03)] transition-all duration-150 hover:border-white/80 hover:bg-white/90 hover:shadow-[0_2px_6px_rgba(0,0,0,0.05)]"
                         >
                           <div className="min-w-0">
-                            <p className="truncate font-medium text-gray-700">{item.fornecedor}</p>
-                            <p className="text-[9px] text-gray-400">{item.vencimento}</p>
+                            <p className="truncate text-[12px] font-medium text-gray-800">{item.fornecedor}</p>
+                            <p className="mt-0.5 text-[10px] text-gray-400">{item.vencimento}</p>
                           </div>
-                          <span className="shrink-0 font-semibold text-gray-800">
+                          <span className="shrink-0 text-[12px] font-semibold text-gray-900">
                             {formatCurrency(parseCurrency(item.valor))}
                           </span>
                         </div>
