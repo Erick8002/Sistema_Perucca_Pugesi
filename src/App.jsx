@@ -12,6 +12,7 @@ const categoryOptions = [
   "Fertilizantes",
   "Defensivos",
   "Sementes",
+  "Funcionarios",
 ];
 
 const monthOptions = [
@@ -107,6 +108,7 @@ export default function App() {
   const [endDate, setEndDate] = useState("");
 
   const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
+  const [pageTransactions, setPageTransactions] = useState(() => initialTransactions);
 
   const filteredTransactions = transactions.filter((transaction) => {
     if (!transaction) return false;
@@ -190,9 +192,10 @@ export default function App() {
             setEndDate={setEndDate}
             categoryOptions={categoryOptions}
             monthOptions={monthOptions}
+            onPageDataChange={setPageTransactions}
           />
           <RelatoryButtons />
-          <PastelCards />
+          <PastelCards transactions={pageTransactions} />
           <ChartsSection />
         </div>
       </main>

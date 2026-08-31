@@ -19,6 +19,7 @@ export default function TransactionsTable({
   setEndDate,
   categoryOptions,
   monthOptions,
+  onPageDataChange,
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
@@ -166,6 +167,12 @@ export default function TransactionsTable({
   const indexOfFirstItem = indexOfLastItem - itemsPerPage; // Pega o índice do primeiro item da página
   const currentTransactions = sortedTransactions.slice(indexOfFirstItem, indexOfLastItem); // Pega as transações que estão na página atual
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
+
+  useEffect(() => {
+    if (onPageDataChange) {
+      onPageDataChange(currentTransactions);
+    }
+  }, [currentTransactions, onPageDataChange]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">

@@ -6,6 +6,7 @@ const categoryOptions = [
     "Fertilizantes",
     "Defensivos",
     "Sementes",
+    "Funcionarios",
 ];
 
 const parseCurrencyInput = (value) => {
