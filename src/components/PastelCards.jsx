@@ -168,11 +168,15 @@ export default function PastelCards({ transactions = [] }) {
             return (
               <div key={title} className="space-y-3">
                 <div
-                  className={`relative min-h-[170px] rounded-xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5 ${tones[style].card}`}
+                  onClick={() => toggleCard(title)}
+                  className={`relative min-h-[170px] cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5 ${tones[style].card}`}
                 >
                   <div className="flex items-center justify-between gap-2 text-[11px] text-gray-500 sm:text-xs">
                     <span className="leading-snug">{title}</span>
-                    <label className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white/80 px-1.5 py-1 shadow-[0_1px_3px_rgba(109,40,217,0.08)] transition-all duration-200 hover:border-purple-300 hover:shadow-[0_2px_8px_rgba(109,40,217,0.12)] focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100">
+                    <label
+                      onClick={(event) => event.stopPropagation()}
+                      className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white/80 px-1.5 py-1 shadow-[0_1px_3px_rgba(109,40,217,0.08)] transition-all duration-200 hover:border-purple-300 hover:shadow-[0_2px_8px_rgba(109,40,217,0.12)] focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100"
+                    >
                       <span className="text-[9px] font-bold tracking-[0.04em] text-purple-700">R$</span>
                       <input
                         type="number"
@@ -193,16 +197,11 @@ export default function PastelCards({ transactions = [] }) {
                     {subtitle}
                   </p>
 
-                  <button
-                    type="button"
-                    onClick={() => toggleCard(title)}
-                    className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center justify-center"
-                    aria-label={`Mostrar detalhes de ${title}`}
-                  >
+                  <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center justify-center">
                     <ChevronDown
                       className={`h-4 w-4 cursor-pointer transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} ${tones[style].chevron}`}
                     />
-                  </button>
+                  </div>
                 </div>
 
                 {isExpanded && (
@@ -239,7 +238,8 @@ export default function PastelCards({ transactions = [] }) {
           return (
             <div key={title} className="space-y-3">
               <div
-                className={`relative min-h-[170px] rounded-xl border p-4 shadow-sm sm:p-5 ${tones[style].card}`}
+                onClick={() => toggleCard(title)}
+                className={`relative min-h-[170px] cursor-pointer rounded-xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5 ${tones[style].card}`}
               >
                 <span className="block text-[11px] text-gray-500 sm:text-xs">{title}</span>
 
@@ -251,16 +251,11 @@ export default function PastelCards({ transactions = [] }) {
                   {subtitle}
                 </p>
 
-                <button
-                  type="button"
-                  onClick={() => toggleCard(title)}
-                  className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center justify-center"
-                  aria-label={`Mostrar detalhes de ${title}`}
-                >
+                <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center justify-center">
                   <ChevronDown
                     className={`h-4 w-4 cursor-pointer transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} ${tones[style].chevron}`}
                   />
-                </button>
+                </div>
               </div>
 
               {isExpanded && (
