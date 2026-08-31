@@ -13,7 +13,9 @@ const parseCurrency = (value) => {
 };
 
 const formatCurrency = (value) => {
-  return (Number(value) || 0).toLocaleString('pt-BR', {
+  const numericValue = typeof value === 'number' ? value : parseCurrency(value);
+
+  return (numericValue || 0).toLocaleString('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   });
@@ -28,6 +30,7 @@ const formatBrazilianNumber = (value) => {
 
 export default function PastelCards({ transactions = [] }) {
   const [thresholdValue, setThresholdValue] = useState(3000);
+  const [expandedCard, setExpandedCard] = useState(null);
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -94,6 +97,7 @@ export default function PastelCards({ transactions = [] }) {
       subtitle: `${upcomingTransactions.length} faturas nos próximos 7 dias`,
       style: 'amber',
       badge: null,
+      details: upcomingTransactions,
     },
     {
       title: 'Contas Acima de R$',
@@ -105,6 +109,7 @@ export default function PastelCards({ transactions = [] }) {
       style: 'purple',
       badge: null,
       editableValue: true,
+      details: highValueTransactions,
     },
     {
       title: 'Gastos com Funcionários',
@@ -115,6 +120,7 @@ export default function PastelCards({ transactions = [] }) {
       subtitle: 'Salários, encargos, e benefícios',
       style: 'blue',
       badge: null,
+      details: employeeTransactions,
     },
     {
       title: 'Despesas Fixas Mensais',
@@ -125,6 +131,7 @@ export default function PastelCards({ transactions = [] }) {
       subtitle: `${monthlyTransactions.length} custos recorrentes do mês`,
       style: 'emerald',
       badge: null,
+      details: monthlyTransactions,
     },
   ];
 
@@ -147,30 +154,94 @@ export default function PastelCards({ transactions = [] }) {
     },
   };
 
+  const toggleCard = (title) => {
+    setExpandedCard((current) => (current === title ? null : title));
+  };
+
   return (
     <div className="w-full overflow-hidden">
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {cards.map(({ title, value, subtitle, style, editableValue }) => {
+        {cards.map(({ title, value, subtitle, style, editableValue, details = [] }) => {
+          const isExpanded = expandedCard === title;
+
           if (editableValue) {
             return (
-              <div
-                key={title}
-                className={`relative min-h-[170px] rounded-xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5 ${tones[style].card}`}
-              >
-                <div className="flex items-center justify-between gap-2 text-[11px] text-gray-500 sm:text-xs">
-                  <span className="leading-snug">{title}</span>
-                  <label className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white/80 px-1.5 py-1 shadow-[0_1px_3px_rgba(109,40,217,0.08)] transition-all duration-200 hover:border-purple-300 hover:shadow-[0_2px_8px_rgba(109,40,217,0.12)] focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100">
-                    <span className="text-[9px] font-bold tracking-[0.04em] text-purple-700">R$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="50"
-                      value={thresholdValue}
-                      onChange={(event) => setThresholdValue(Number(event.target.value) || 0)}
-                      className="w-14 border-0 bg-transparent p-0 text-right text-[10px] font-semibold text-purple-900 outline-none sm:text-[11px]"
+              <div key={title} className="space-y-3">
+                <div
+                  className={`relative min-h-[170px] rounded-xl border p-4 shadow-sm transition-shadow duration-200 hover:shadow-md sm:p-5 ${tones[style].card}`}
+                >
+                  <div className="flex items-center justify-between gap-2 text-[11px] text-gray-500 sm:text-xs">
+                    <span className="leading-snug">{title}</span>
+                    <label className="flex items-center gap-1 rounded-lg border border-purple-200 bg-white/80 px-1.5 py-1 shadow-[0_1px_3px_rgba(109,40,217,0.08)] transition-all duration-200 hover:border-purple-300 hover:shadow-[0_2px_8px_rgba(109,40,217,0.12)] focus-within:border-purple-400 focus-within:ring-2 focus-within:ring-purple-100">
+                      <span className="text-[9px] font-bold tracking-[0.04em] text-purple-700">R$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="50"
+                        value={thresholdValue}
+                        onChange={(event) => setThresholdValue(Number(event.target.value) || 0)}
+                        className="w-14 border-0 bg-transparent p-0 text-right text-[10px] font-semibold text-purple-900 outline-none sm:text-[11px]"
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mt-2 text-[clamp(1.05rem,2vw,1.5rem)] font-bold leading-tight text-gray-800">
+                    {formatCurrency(value)}
+                  </div>
+
+                  <p className="mt-2 text-[10px] leading-relaxed text-gray-400 sm:text-xs">
+                    {subtitle}
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => toggleCard(title)}
+                    className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center justify-center"
+                    aria-label={`Mostrar detalhes de ${title}`}
+                  >
+                    <ChevronDown
+                      className={`h-4 w-4 cursor-pointer transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} ${tones[style].chevron}`}
                     />
-                  </label>
+                  </button>
                 </div>
+
+                {isExpanded && (
+                  <div className="rounded-xl border border-purple-100 bg-white/80 p-3 shadow-sm">
+                    <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                      Faturas relacionadas
+                    </div>
+                    <div className="space-y-2">
+                      {details.length === 0 ? (
+                        <p className="text-[10px] text-gray-400">Nenhuma fatura encontrada.</p>
+                      ) : (
+                        details.map((item) => (
+                          <div
+                            key={item.id}
+                            className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5 text-[10px] text-gray-600"
+                          >
+                            <div className="min-w-0">
+                              <p className="truncate font-medium text-gray-700">{item.fornecedor}</p>
+                              <p className="text-[9px] text-gray-400">{item.vencimento}</p>
+                            </div>
+                            <span className="shrink-0 font-semibold text-gray-800">
+                              {formatCurrency(parseCurrency(item.valor))}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <div key={title} className="space-y-3">
+              <div
+                className={`relative min-h-[170px] rounded-xl border p-4 shadow-sm sm:p-5 ${tones[style].card}`}
+              >
+                <span className="block text-[11px] text-gray-500 sm:text-xs">{title}</span>
 
                 <div className="mt-2 text-[clamp(1.05rem,2vw,1.5rem)] font-bold leading-tight text-gray-800">
                   {formatCurrency(value)}
@@ -180,31 +251,45 @@ export default function PastelCards({ transactions = [] }) {
                   {subtitle}
                 </p>
 
-                <ChevronDown
-                  className={`absolute bottom-3 left-1/2 h-4 w-4 -translate-x-1/2 cursor-pointer ${tones[style].chevron}`}
-                />
-              </div>
-            );
-          }
-
-          return (
-            <div
-              key={title}
-              className={`relative min-h-[170px] rounded-xl border p-4 shadow-sm sm:p-5 ${tones[style].card}`}
-            >
-              <span className="block text-[11px] text-gray-500 sm:text-xs">{title}</span>
-
-              <div className="mt-2 text-[clamp(1.05rem,2vw,1.5rem)] font-bold leading-tight text-gray-800">
-                {formatCurrency(value)}
+                <button
+                  type="button"
+                  onClick={() => toggleCard(title)}
+                  className="absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center justify-center"
+                  aria-label={`Mostrar detalhes de ${title}`}
+                >
+                  <ChevronDown
+                    className={`h-4 w-4 cursor-pointer transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''} ${tones[style].chevron}`}
+                  />
+                </button>
               </div>
 
-              <p className="mt-2 text-[10px] leading-relaxed text-gray-400 sm:text-xs">
-                {subtitle}
-              </p>
-
-              <ChevronDown
-                className={`absolute bottom-3 left-1/2 h-4 w-4 -translate-x-1/2 cursor-pointer ${tones[style].chevron}`}
-              />
+              {isExpanded && (
+                <div className="rounded-xl border border-gray-200 bg-white/80 p-3 shadow-sm">
+                  <div className="mb-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                    Faturas relacionadas
+                  </div>
+                  <div className="space-y-2">
+                    {details.length === 0 ? (
+                      <p className="text-[10px] text-gray-400">Nenhuma fatura encontrada.</p>
+                    ) : (
+                      details.map((item) => (
+                        <div
+                          key={item.id}
+                          className="flex items-center justify-between gap-2 rounded-lg border border-gray-100 bg-gray-50 px-2 py-1.5 text-[10px] text-gray-600"
+                        >
+                          <div className="min-w-0">
+                            <p className="truncate font-medium text-gray-700">{item.fornecedor}</p>
+                            <p className="text-[9px] text-gray-400">{item.vencimento}</p>
+                          </div>
+                          <span className="shrink-0 font-semibold text-gray-800">
+                            {formatCurrency(parseCurrency(item.valor))}
+                          </span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           );
         })}
