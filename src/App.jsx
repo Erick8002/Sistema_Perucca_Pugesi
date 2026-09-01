@@ -34,7 +34,7 @@ const monthOptions = [
 const initialTransactions = [
   {
     id: 1,
-    vencimento: "2026-08-08",
+    vencimento: "2026-09-08",
     fornecedor: "Agrofértil Insumos",
     categoria: "Fertilizantes",
     valor: "4.500,00",
@@ -42,7 +42,7 @@ const initialTransactions = [
   },
   {
     id: 2,
-    vencimento: "2026-08-10",
+    vencimento: "2026-09-10",
     fornecedor: "MaqCampo Peças e Manutenção",
     categoria: "Defensivos",
     valor: "1.580,00",
@@ -50,7 +50,7 @@ const initialTransactions = [
   },
   {
     id: 3,
-    vencimento: "2026-08-17",
+    vencimento: "2026-09-17",
     fornecedor: "Sementes AgroTech",
     categoria: "Sementes",
     valor: "2.300,00",
@@ -66,7 +66,7 @@ const initialTransactions = [
   },
   {
     id: 5,
-    vencimento: "2026-08-30",
+    vencimento: "2026-09-30",
     fornecedor: "Agrohara",
     categoria: "Sementes",
     valor: "3.250,00",

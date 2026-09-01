@@ -168,8 +168,15 @@ export default function TransactionsTable({
   const currentTransactions = sortedTransactions.slice(indexOfFirstItem, indexOfLastItem); // Pega as transações que estão na página atual
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
+  const previousPageDataRef = useRef("");
+
   useEffect(() => {
-    if (onPageDataChange) {
+    if (!onPageDataChange) return;
+
+    const serializedPageData = JSON.stringify(currentTransactions);
+
+    if (serializedPageData !== previousPageDataRef.current) {
+      previousPageDataRef.current = serializedPageData;
       onPageDataChange(currentTransactions);
     }
   }, [currentTransactions, onPageDataChange]);
