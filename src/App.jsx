@@ -85,6 +85,28 @@ const parseCurrency = (valueString) => {
 
 export default function App() {
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(null);
+
+  useEffect(() => {
+    async function loadAccounts() {
+      try {
+        const response = await fetch('http://localhost:3001/api/accounts');
+
+        if (!response.ok) {
+          throw new Error('Não foi possível carregar as contas');
+        }
+
+        const accountData = await response.json();
+        setAccounts(accountData);
+        setSelectedAccount(accountData[0] || null);
+      } catch (error) {
+        console.error('Erro ao carregar contas:', error.message);
+      }
+    }
+
+    loadAccounts();
+  }, []);
 
   const [transactions, setTransactions] = useState(() => {
     try {
@@ -166,7 +188,11 @@ export default function App() {
 
       <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-6xl space-y-6">
-          <Header />
+          <Header
+            accounts={accounts}
+            selectedAccount={selectedAccount}
+            onAccountSelect={setSelectedAccount}
+          />
           <KpiCards 
             totalExpenses={totalExpenses}
             expensesCount={expensesCount}
