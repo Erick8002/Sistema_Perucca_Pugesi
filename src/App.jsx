@@ -241,7 +241,7 @@ export default function App() {
             onPageDataChange={setPageTransactions}
           />
           <RelatoryButtons />
-          <PastelCards transactions={pageTransactions} />
+          <PastelCards transactions={transactions} />
           <ChartsSection transactions={transactions} />
         </div>
       </main>

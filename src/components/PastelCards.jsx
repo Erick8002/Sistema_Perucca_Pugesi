@@ -3,10 +3,7 @@ import { ChevronDown } from 'lucide-react';
 
 const parseCurrency = (value) => {
   const normalizedValue = String(value ?? '0')
-    .replace(/R\$/g, '')
     .replace(/\s/g, '')
-    .replace(/\./g, '')
-    .replace(',', '.')
     .trim();
 
   return Number(normalizedValue) || 0;
