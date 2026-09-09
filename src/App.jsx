@@ -138,10 +138,6 @@ export default function App() {
     loadTransactions();
   }, []);
 
-  // useEffect(() => {
-  //   localStorage.setItem('@finance:transactions', JSON.stringify(transactions));
-  // }, [transactions]);
-
   const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");

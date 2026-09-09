@@ -92,7 +92,7 @@ export default function TransactionsTable({
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryTableHeader, monthTableFilter, startDate, endDate, filterTransactions, searchTerm]);
+  }, [categoryTableHeader, monthTableFilter, startDate, endDate, searchTerm]);
 
   const dataToFilter = Array.isArray(filterTransactions) ? filterTransactions : transactions;
   const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
