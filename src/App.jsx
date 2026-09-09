@@ -88,6 +88,9 @@ export default function App() {
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [transactions, setTransactions] = useState([]);
+  const accountTransactions = transactions.filter(
+    (transaction) => transaction.accountId === selectedAccount?.id
+  )
 
   useEffect(() => {
     async function loadAccounts() {
@@ -122,6 +125,7 @@ export default function App() {
 
         const formattedTransactions = transactionData.map((t) => ({
           id: t.id,
+          accountId: t.account_id,
           vencimento: t.data_vencimento?.slice(0, 10),
           fornecedor: t.fornecedor,
           categoria: t.categoria,
@@ -146,7 +150,7 @@ export default function App() {
   const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
   const [pageTransactions, setPageTransactions] = useState([]);
 
-  const filteredTransactions = transactions.filter((transaction) => {
+  const filteredTransactions = accountTransactions.filter((transaction) => {
     if (!transaction) return false;
 
     const category = categoryTableHeader === "Todas as Categorias" || transaction.categoria?.includes(categoryTableHeader);

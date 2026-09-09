@@ -8,6 +8,7 @@ router.get('/', async (req, res) => {
             SELECT 
                 a.name AS nome,
                 t.id,
+                t.account_id AS account_id,
                 t.due_date AS data_vencimento,
                 t.supplier AS fornecedor,
                 t.category AS categoria,
