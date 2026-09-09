@@ -2,13 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 import { X, Upload } from 'lucide-react';
 
-const categoryOptions = [
-    "Fertilizantes",
-    "Defensivos",
-    "Sementes",
-    "Funcionarios",
-];
-
 const parseCurrencyInput = (value) => {
     const normalizedValue = String(value)
       .replace(/R\$/gi, "")
@@ -30,7 +23,7 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave}) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }) {
     const selectRef = useRef(null);
 
     useEffect(() => {
@@ -208,9 +201,9 @@ export function NewTransactionModal({ isOpen, onClose, onSave}) {
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-600 focus:border-purple-500 focus:bg-white focus:outline-none"
                 >
                   <option value="">Selecione</option>
-                  <option value="pending">Pendente</option>
-                  <option value="paid">Pago</option>
-                  <option value="overdue">Vencido</option>
+                  <option value="Pendente">Pendente</option>
+                  <option value="Pago">Pago</option>
+                  <option value="Vencido">Vencido</option>
                 </select>
               </div>
             </div>

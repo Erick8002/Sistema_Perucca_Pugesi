@@ -1,19 +1,11 @@
-import { useEffect, useState } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import KpiCards from './components/KpiCards';
-import TransactionsTable from './components/TransactionsTable';
-import RelatoryButtons from './components/RelatoryButtons';
-import PastelCards from './components/PastelCards';
-import ChartsSection from './components/ChartsSection';
-
-const categoryOptions = [
-  "Todas as Categorias",
-  "Fertilizantes",
-  "Defensivos",
-  "Sementes",
-  "Funcionarios",
-];
+import { useEffect, useState } from "react";
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
+import KpiCards from "./components/KpiCards";
+import TransactionsTable from "./components/TransactionsTable";
+import RelatoryButtons from "./components/RelatoryButtons";
+import PastelCards from "./components/PastelCards";
+import ChartsSection from "./components/ChartsSection";
 
 const monthOptions = [
   "Selecione o mês",
@@ -56,7 +48,7 @@ const initialTransactions = [
     valor: "2.300,00",
     status: "Pendente",
   },
-  { 
+  {
     id: 4,
     vencimento: "2026-07-17",
     fornecedor: "Fertilizantes AgroTech",
@@ -71,12 +63,15 @@ const initialTransactions = [
     categoria: "Sementes",
     valor: "3.250,00",
     status: "Pendente",
-  }
+  },
 ];
 
 const parseCurrency = (valueString) => {
-  if(!valueString) return 0;
-  const normalizedValue = String(valueString).replace("R$", "").replace(/\s/g, "").trim();
+  if (!valueString) return 0;
+  const normalizedValue = String(valueString)
+    .replace("R$", "")
+    .replace(/\s/g, "")
+    .trim();
   const numericString = normalizedValue.includes(",")
     ? normalizedValue.replace(/\./g, "").replace(",", ".")
     : normalizedValue;
@@ -89,23 +84,31 @@ export default function App() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const accountTransactions = transactions.filter(
-    (transaction) => transaction.accountId === selectedAccount?.id
-  )
+    (transaction) => transaction.accountId === selectedAccount?.id,
+  );
+
+  const categoryOptions = [
+    "Todas as Categorias",
+    ...new Set(transactions
+      .map((transaction) => transaction.categoria)
+      .filter(Boolean)
+    )
+  ];
 
   useEffect(() => {
     async function loadAccounts() {
       try {
-        const response = await fetch('http://localhost:3001/api/accounts');
+        const response = await fetch("http://localhost:3001/api/accounts");
 
         if (!response.ok) {
-          throw new Error('Não foi possível carregar as contas');
+          throw new Error("Não foi possível carregar as contas");
         }
 
         const accountData = await response.json();
         setAccounts(accountData);
         setSelectedAccount(accountData[0] || null);
       } catch (error) {
-        console.error('Erro ao carregar contas:', error.message);
+        console.error("Erro ao carregar contas:", error.message);
       }
     }
 
@@ -114,11 +117,11 @@ export default function App() {
 
   useEffect(() => {
     async function loadTransactions() {
-      try{
-        const response = await fetch('http://localhost:3001/api/transactions')
+      try {
+        const response = await fetch("http://localhost:3001/api/transactions");
 
-        if(!response.ok) {
-          throw new Error('Não foi possível carregar as transações')
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar as transações");
         }
 
         const transactionData = await response.json();
@@ -134,15 +137,17 @@ export default function App() {
         }));
 
         setTransactions(formattedTransactions);
-      } catch(error) {
-        console.error('Erro ao carregar transações: ', error.message);
+      } catch (error) {
+        console.error("Erro ao carregar transações: ", error.message);
       }
     }
 
     loadTransactions();
   }, []);
 
-  const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
+  const [categoryTableHeader, setCategoryTableHeader] = useState(
+    categoryOptions[0],
+  );
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -153,19 +158,21 @@ export default function App() {
   const filteredTransactions = accountTransactions.filter((transaction) => {
     if (!transaction) return false;
 
-    const category = categoryTableHeader === "Todas as Categorias" || transaction.categoria?.includes(categoryTableHeader);
+    const category =
+      categoryTableHeader === "Todas as Categorias" ||
+      transaction.categoria?.includes(categoryTableHeader);
     // console.log("Existe categoria? " + category);
 
     if (!category) return false;
 
-    if(monthTableFilter && monthTableFilter != monthOptions[0]) {
+    if (monthTableFilter && monthTableFilter != monthOptions[0]) {
       if (!transaction.vencimento) return false;
 
       const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
       const monthString = transaction.vencimento.split("-")[1];
       const transactionMonthIndex = parseInt(monthString, 10);
 
-      if(transactionMonthIndex !== selectedMonthNumber) {
+      if (transactionMonthIndex !== selectedMonthNumber) {
         return false;
       }
     }
@@ -178,27 +185,37 @@ export default function App() {
       return false;
     }
 
-    if(selectedCardStatus !== "Todos" && transaction.status !== selectedCardStatus){
+    if (
+      selectedCardStatus !== "Todos" &&
+      transaction.status !== selectedCardStatus
+    ) {
       return false;
     }
 
     return true;
   });
 
-  const totalExpenses = filteredTransactions.reduce((acc, item) => acc + parseCurrency(item.valor), 0);
+  const totalExpenses = filteredTransactions.reduce(
+    (acc, item) => acc + parseCurrency(item.valor),
+    0,
+  );
   const expensesCount = filteredTransactions.length;
 
-  const paidTransactions = filteredTransactions.filter((item) => item.status === "Pago");
+  const paidTransactions = filteredTransactions.filter(
+    (item) => item.status === "Pago",
+  );
   const totalPaid = paidTransactions.reduce(
     (acc, item) => acc + parseCurrency(item.valor),
-    0
+    0,
   );
   const paidCount = paidTransactions.length;
 
-  const pendingTransactions = filteredTransactions.filter((item) => item.status === "Pendente");
+  const pendingTransactions = filteredTransactions.filter(
+    (item) => item.status === "Pendente",
+  );
   const totalPending = pendingTransactions.reduce(
     (acc, item) => acc + parseCurrency(item.valor),
-    0
+    0,
   );
   const pendingCount = pendingTransactions.length;
 
@@ -213,7 +230,7 @@ export default function App() {
             selectedAccount={selectedAccount}
             onAccountSelect={setSelectedAccount}
           />
-          <KpiCards 
+          <KpiCards
             totalExpenses={totalExpenses}
             expensesCount={expensesCount}
             totalPaid={totalPaid}
@@ -224,7 +241,7 @@ export default function App() {
             setSelectedCardStatus={setSelectedCardStatus}
           />
 
-          <TransactionsTable 
+          <TransactionsTable
             filterTransactions={filteredTransactions}
             transactions={transactions}
             setTransactions={setTransactions}
@@ -239,6 +256,7 @@ export default function App() {
             categoryOptions={categoryOptions}
             monthOptions={monthOptions}
             onPageDataChange={setPageTransactions}
+            selectedAccount={selectedAccount}
           />
           <RelatoryButtons />
           <PastelCards transactions={filteredTransactions} />

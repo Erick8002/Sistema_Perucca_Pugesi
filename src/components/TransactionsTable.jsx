@@ -20,6 +20,7 @@ export default function TransactionsTable({
   categoryOptions,
   monthOptions,
   onPageDataChange,
+  selectedAccount
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
@@ -28,27 +29,47 @@ export default function TransactionsTable({
 
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
-  const handleSaveTransaction = (newTransaction) => {
+  const handleSaveTransaction = async (newTransaction) => {
+    if(!selectedAccount) {
+      alert("Selecione uma conta antes de criar uma transação.");
+      return;
+    }
     const rawDate = newTransaction.vencimento || newTransaction.dueDate;
-    const validDate = rawDate ? rawDate : new Date().toISOString().split("T")[0];
-    
-    const maxId = transactions.length > 0
-      ? Math.max(...transactions.map((item) => Number(item.id) || 0))
-      : 0;
+    const validDate = rawDate
+      ? rawDate
+      : new Date().toISOString().split("T")[0];
 
-    const createdTransaction = {
-      id: maxId + 1,
-      vencimento: validDate,
-      fornecedor: newTransaction.fornecedor || newTransaction.provider,
-      categoria: newTransaction.categoria || newTransaction.categoryOptions,
-      valor: newTransaction.valor ?? newTransaction.value ?? 0,
-      status: newTransaction.status === "Pago" || newTransaction.status === "paid" ? "Pago" : "Pendente",
+    const response = await fetch("http://localhost:3001/api/transactions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        account_id: selectedAccount.id,
+        due_date: validDate,
+        supplier: newTransaction.fornecedor,
+        category: newTransaction.categoria,
+        amount: newTransaction.valor,
+        status: newTransaction.status,
+      }),
+    });
+
+    const responseData = await response.json();
+
+    const savedTransaction = {
+      id:responseData.id,
+      accountId: selectedAccount.id,
+      vencimento: responseData.due_date,
+      fornecedor: responseData.supplier,
+      categoria: responseData.category,
+      valor: responseData.amount,
+      status: responseData.status
     };
 
-    setTransactions((prev) => [createdTransaction, ...prev]);
+    setTransactions((prev) => [savedTransaction, ...prev]);
     setIsModalOpen(false);
     setCurrentPage(1);
-  }
+  };
 
   const handleDeleteTransaction = (idToDelete) => {
     setTransactions((prev) => prev.filter((item) => item.id !== idToDelete));
@@ -67,24 +88,24 @@ export default function TransactionsTable({
 
   const handleEndDateChange = (e) => {
     setEndDate(e.target.value);
-    setMonthTableFilter(monthOptions[0])
+    setMonthTableFilter(monthOptions[0]);
   };
 
   useEffect(() => {
     const activeDate = startDate || endDate;
-    const activeStartDateMonth = startDate? startDate.split("-")[1] : false;
-    const activeEndDateMonth = endDate? endDate.split("-")[1] : false;
+    const activeStartDateMonth = startDate ? startDate.split("-")[1] : false;
+    const activeEndDateMonth = endDate ? endDate.split("-")[1] : false;
 
-    if(activeDate) {
+    if (activeDate) {
       const [, monthString] = activeDate.split("-");
       const monthIndex = parseInt(monthString, 10);
       const arrayMonthOptions = monthOptions[monthIndex];
 
-      if(activeStartDateMonth && activeEndDateMonth) {
-        if(activeStartDateMonth !== activeEndDateMonth) {
+      if (activeStartDateMonth && activeEndDateMonth) {
+        if (activeStartDateMonth !== activeEndDateMonth) {
           setMonthTableFilter(monthOptions[0]);
         }
-      } else if(arrayMonthOptions && monthTableFilter !== arrayMonthOptions){
+      } else if (arrayMonthOptions && monthTableFilter !== arrayMonthOptions) {
         setMonthTableFilter(arrayMonthOptions);
       }
     }
@@ -94,7 +115,9 @@ export default function TransactionsTable({
     setCurrentPage(1);
   }, [categoryTableHeader, monthTableFilter, startDate, endDate, searchTerm]);
 
-  const dataToFilter = Array.isArray(filterTransactions) ? filterTransactions : transactions;
+  const dataToFilter = Array.isArray(filterTransactions)
+    ? filterTransactions
+    : transactions;
   const normalizedSearchTerm = searchTerm.trim().toLocaleLowerCase();
   const filteredTransactions = dataToFilter.filter((item) => {
     if (!normalizedSearchTerm) return true;
@@ -107,14 +130,19 @@ export default function TransactionsTable({
       item.valor,
       item.status,
     ].some((value) =>
-      String(value ?? "").toLocaleLowerCase().includes(normalizedSearchTerm)
+      String(value ?? "")
+        .toLocaleLowerCase()
+        .includes(normalizedSearchTerm),
     );
   });
 
   const dataToSort = filteredTransactions;
 
   const formatCurrency = (value) => {
-    const valueAsString = String(value ?? "0").replace("R$", "").replace(/\s/g, "").trim();
+    const valueAsString = String(value ?? "0")
+      .replace("R$", "")
+      .replace(/\s/g, "")
+      .trim();
     const normalizedValue = valueAsString.includes(",")
       ? valueAsString.replace(/\./g, "").replace(",", ".")
       : valueAsString;
@@ -127,7 +155,7 @@ export default function TransactionsTable({
   };
 
   const sortedTransactions = [...(dataToSort || [])].sort((b, a) => {
-    if(!a?.vencimento || !b?.vencimento) return 0;
+    if (!a?.vencimento || !b?.vencimento) return 0;
     return a.vencimento.localeCompare(b.vencimento);
   });
 
@@ -161,11 +189,15 @@ export default function TransactionsTable({
   };
 
   const totalItems = sortedTransactions.length; // Pega a quantidade total de items que possui na tabela
-  const startItems = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1; // Serve para verificar quantas páginas inteiras já ficaram para trás, sempre retornando 1, 11, 21...
+  const startItems =
+    totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1; // Serve para verificar quantas páginas inteiras já ficaram para trás, sempre retornando 1, 11, 21...
   const endItems = Math.min(currentPage * itemsPerPage, totalItems); // O Math.min compara o menor número entre os dois parâmetros dentro dele, se tornando uma "trava de segurança"
   const indexOfLastItem = currentPage * itemsPerPage; // Pega o índice do último item da página
   const indexOfFirstItem = indexOfLastItem - itemsPerPage; // Pega o índice do primeiro item da página
-  const currentTransactions = sortedTransactions.slice(indexOfFirstItem, indexOfLastItem); // Pega as transações que estão na página atual
+  const currentTransactions = sortedTransactions.slice(
+    indexOfFirstItem,
+    indexOfLastItem,
+  ); // Pega as transações que estão na página atual
   const totalPages = Math.ceil(sortedTransactions.length / itemsPerPage);
 
   const previousPageDataRef = useRef("");
@@ -184,9 +216,7 @@ export default function TransactionsTable({
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">
       <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <h2 className="text-base font-bold text-gray-800 ">
-          Todos os Gastos
-        </h2>
+        <h2 className="text-base font-bold text-gray-800 ">Todos os Gastos</h2>
 
         <div className="flex items-center gap-2 flex-1 max-w-3xl">
           <div className="relative flex-1">
@@ -208,9 +238,10 @@ export default function TransactionsTable({
             />
           </div>
 
-          <button 
+          <button
             onClick={() => setIsModalOpen(true)}
-            className="bg-[#4A2E56] hover:bg-[#382242] text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0">
+            className="bg-[#4A2E56] hover:bg-[#382242] text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0"
+          >
             <Plus className="w-3.5 h-3.5" /> Novo Gasto
           </button>
 
@@ -218,6 +249,7 @@ export default function TransactionsTable({
             isOpen={isModalOpen}
             onClose={() => setIsModalOpen(false)}
             onSave={handleSaveTransaction}
+            categoryOptions={categoryOptions}
           />
         </div>
       </div>
@@ -281,47 +313,55 @@ export default function TransactionsTable({
                   Nenhum lançamento encontrado.
                 </td>
               </tr>
-            ) : currentTransactions.map((item) => {
-              const currentStatus = getTransactionStatus(item);
+            ) : (
+              currentTransactions.map((item) => {
+                const currentStatus = getTransactionStatus(item);
 
-              return (
-                <tr key={item.id} className="hover:bg-gray-50/50">
-                  <td className="py-3">
-                    {item.vencimento.split("-").reverse().join("/")}
-                  </td>
-                  <td className="py-3 font-medium text-gray-900">
-                    {item.fornecedor}
-                  </td>
-                  <td className="py-3 text-gray-500">{item.categoria}</td>
-                  <td className="py-3 font-semibold">R$ {formatCurrency(item.valor)}</td>
-                  <td className="py-3">
-                    <span
-                      className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                        STATUS_STYLES[currentStatus] ||
-                        "bg-gray-100 text-gray-600"
-                      }`}
-                    >
-                      {currentStatus}
-                    </span>
-                  </td>
-                  <td className="py-3 text-right pr-2">
-                    <ActionMenu item={item} />
-                  </td>
-                </tr>
-              );
-            })}
+                return (
+                  <tr key={item.id} className="hover:bg-gray-50/50">
+                    <td className="py-3">
+                      {item.vencimento.split("-").reverse().join("/")}
+                    </td>
+                    <td className="py-3 font-medium text-gray-900">
+                      {item.fornecedor}
+                    </td>
+                    <td className="py-3 text-gray-500">{item.categoria}</td>
+                    <td className="py-3 font-semibold">
+                      R$ {formatCurrency(item.valor)}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                          STATUS_STYLES[currentStatus] ||
+                          "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {currentStatus}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right pr-2">
+                      <ActionMenu item={item} />
+                    </td>
+                  </tr>
+                );
+              })
+            )}
           </tbody>
         </table>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 pt-2 border-t border-gray-50">
-        <span>Mostrando {sortedTransactions.length === 0 ? 0: indexOfFirstItem + 1} - {Math.min(indexOfLastItem, sortedTransactions.length)} de {sortedTransactions.length} lançamentos</span>
+        <span>
+          Mostrando {sortedTransactions.length === 0 ? 0 : indexOfFirstItem + 1}{" "}
+          - {Math.min(indexOfLastItem, sortedTransactions.length)} de{" "}
+          {sortedTransactions.length} lançamentos
+        </span>
         <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
             className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
-          > 
+          >
             ‹
           </button>
 
@@ -339,11 +379,13 @@ export default function TransactionsTable({
               >
                 {pageNumber}
               </button>
-            )
+            );
           })}
 
           <button
-            onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+            onClick={() =>
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+            }
             disabled={currentPage === totalPages || totalPages === 0}
             className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
           >
@@ -353,11 +395,13 @@ export default function TransactionsTable({
         <div>
           Itens por página:{" "}
           <select
-            value={itemsPerPage}onChange={(e) => {
+            value={itemsPerPage}
+            onChange={(e) => {
               setItemsPerPage(Number(e.target.value));
               setCurrentPage(1);
-            }}            
-            className="bg-transparent border rounded text-[11px]">
+            }}
+            className="bg-transparent border rounded text-[11px]"
+          >
             <option value={1}>1</option>
             <option value={5}>5</option>
             <option value={10}>10</option>

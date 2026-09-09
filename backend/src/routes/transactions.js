@@ -27,4 +27,48 @@ router.get('/', async (req, res) => {
     }
 });
 
+router.post('/', async (req, res) => {
+    try {
+        const {
+            account_id,
+            due_date,
+            supplier,
+            category,
+            amount,
+            status
+        } = req.body;
+
+        const result = await pool.query(`
+            INSERT INTO transactions (
+                account_id,
+                due_date,
+                supplier,
+                category,
+                amount,
+                status
+            )
+            VALUES ($1, $2, $3, $4, $5, $6)
+            RETURNING
+                id,
+                account_id,
+                due_date,
+                supplier,
+                category,
+                amount,
+                status;
+        `, [
+            account_id,
+            due_date,
+            supplier,
+            category,
+            amount,
+            status
+        ]);
+        res.status(201).json(result.rows[0]);
+    } catch (error) {
+        console.error('Erro ao criar transação: ', error.message);
+        res.status(500).json({ error: 'Erro ao criar transação' });
+    }
+});
+
 module.exports = router;
