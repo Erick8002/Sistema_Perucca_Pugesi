@@ -87,6 +87,7 @@ export default function App() {
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
   const [accounts, setAccounts] = useState([]);
   const [selectedAccount, setSelectedAccount] = useState(null);
+  const [transactions, setTransactions] = useState([]);
 
   useEffect(() => {
     async function loadAccounts() {
@@ -108,21 +109,38 @@ export default function App() {
     loadAccounts();
   }, []);
 
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const savedData = localStorage.getItem('@finance:transactions');
-      if(savedData && savedData !== 'undefined' && savedData !== 'null') {
-        return JSON.parse(savedData);
-      }
-    } catch (error) {
-      console.error('Erro ao ler do localStorage: ', error);
-    }
-    return initialTransactions;
-  });
-
   useEffect(() => {
-    localStorage.setItem('@finance:transactions', JSON.stringify(transactions));
-  }, [transactions]);
+    async function loadTransactions() {
+      try{
+        const response = await fetch('http://localhost:3001/api/transactions')
+
+        if(!response.ok) {
+          throw new Error('Não foi possível carregar as transações')
+        }
+
+        const transactionData = await response.json();
+
+        const formattedTransactions = transactionData.map((t) => ({
+          id: t.id,
+          vencimento: t.data_vencimento?.slice(0, 10),
+          fornecedor: t.fornecedor,
+          categoria: t.categoria,
+          valor: t.valor,
+          status: t.status,
+        }));
+
+        setTransactions(formattedTransactions);
+      } catch(error) {
+        console.error('Erro ao carregar transações: ', error.message);
+      }
+    }
+
+    loadTransactions();
+  }, []);
+
+  // useEffect(() => {
+  //   localStorage.setItem('@finance:transactions', JSON.stringify(transactions));
+  // }, [transactions]);
 
   const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
@@ -130,7 +148,7 @@ export default function App() {
   const [endDate, setEndDate] = useState("");
 
   const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
-  const [pageTransactions, setPageTransactions] = useState(() => initialTransactions);
+  const [pageTransactions, setPageTransactions] = useState([]);
 
   const filteredTransactions = transactions.filter((transaction) => {
     if (!transaction) return false;
@@ -141,6 +159,8 @@ export default function App() {
     if (!category) return false;
 
     if(monthTableFilter && monthTableFilter != monthOptions[0]) {
+      if (!transaction.vencimento) return false;
+
       const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
       const monthString = transaction.vencimento.split("-")[1];
       const transactionMonthIndex = parseInt(monthString, 10);
@@ -222,7 +242,7 @@ export default function App() {
           />
           <RelatoryButtons />
           <PastelCards transactions={pageTransactions} />
-          <ChartsSection />
+          <ChartsSection transactions={transactions} />
         </div>
       </main>
     </div>

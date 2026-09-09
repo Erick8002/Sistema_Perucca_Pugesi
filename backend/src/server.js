@@ -1,7 +1,8 @@
 const express = require('express'); // Importa a biblioteca express
 const cors = require('cors');
 const pool = require('./db');
-const accountsRoutes = require('./routes/accounts')
+const accountsRoutes = require('./routes/accounts');
+const transactionsRoutes = require('./routes/transactions');
 require('dotenv').config(); // Carrega o arquivo .env e o .config() ativa o carregamento
 
 const app = express(); // Aqui ele cria o servidor
@@ -11,6 +12,7 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use('/api/accounts', accountsRoutes);
+app.use('/api/transactions', transactionsRoutes);
 
 // Rota de teste
 app.get('/', (req, res) => {

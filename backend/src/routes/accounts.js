@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
         res.json(result.rows); //Transforma o resultado em json
     } catch (error) {
         console.error('Erro ao buscar contas: ', error.message);
-        res.status(500).json({error: 'Erro ao buscar contas'});;
+        res.status(500).json({error: 'Erro ao buscar contas'});
     }
 });
 
