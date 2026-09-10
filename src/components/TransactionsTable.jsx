@@ -18,6 +18,7 @@ export default function TransactionsTable({
   endDate,
   setEndDate,
   categoryOptions,
+  statusOptions,
   monthOptions,
   onPageDataChange,
   selectedAccount
@@ -250,6 +251,7 @@ export default function TransactionsTable({
             onClose={() => setIsModalOpen(false)}
             onSave={handleSaveTransaction}
             categoryOptions={categoryOptions}
+            statusOptions={statusOptions}
           />
         </div>
       </div>

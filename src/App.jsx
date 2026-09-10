@@ -95,6 +95,14 @@ export default function App() {
     )
   ];
 
+  const statusOptions = [
+    ...new Set(transactions
+      .map((transaction) => transaction.status)
+      .filter(Boolean)
+    ),
+    "Atrasado"
+  ];
+
   useEffect(() => {
     async function loadAccounts() {
       try {
@@ -254,6 +262,7 @@ export default function App() {
             endDate={endDate}
             setEndDate={setEndDate}
             categoryOptions={categoryOptions}
+            statusOptions={statusOptions}
             monthOptions={monthOptions}
             onPageDataChange={setPageTransactions}
             selectedAccount={selectedAccount}

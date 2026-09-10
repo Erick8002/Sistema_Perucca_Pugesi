@@ -23,7 +23,7 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions }) {
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -52,7 +52,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }
         file: null,
     })
 
-    const [categoria, setCategoria] = useState('Selecione')
+    const [categoria, setCategoria] = useState('Selecione');
+    const [status, setStatus] = useState('Selecione');
 
     if(!isOpen) return null;
 
@@ -85,7 +86,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }
         onSave({
           ...formData,
           categoria: categoria,
-          valor: parsedValue
+          valor: parsedValue,
+          status: status === 'Selecione' || !status ? "Pendente" : status
         });
 
         setFormaData({
@@ -96,6 +98,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }
           file: null,
         });
         setCategoria('Selecione');
+        setStatus('Selecione');
 
         onClose();
     };
@@ -197,17 +200,22 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }
                 <label className="block text-sm font-semibold text-slate-700">
                   Status Inicial
                 </label>
-                <select
+                {/* <select
                   name="status"
                   value={formData.status}
                   onChange={handleChange}
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-600 focus:border-purple-500 focus:bg-white focus:outline-none"
                 >
-                  <option value="">Selecione</option>
+                  <option value='null'>Selecione</option>
                   <option value="Pendente">Pendente</option>
                   <option value="Pago">Pago</option>
                   <option value="Vencido">Vencido</option>
-                </select>
+                </select> */}
+                <CustomSelect 
+                    options={statusOptions}
+                    selected={status}
+                    onSelect={setStatus}
+                  />
               </div>
             </div>
 
