@@ -1,12 +1,8 @@
-import React from 'react';
-
+import logoImg from '../assets/Logo.png';
 export default function Sidebar() {
   return (
-    <aside className="w-20 bg-white border-r border-gray-200 flex flex-col items-center py-6 shrink-0">
-      <div className="w-12 h-16 border-2 border-black flex items-center justify-center font-bold text-2xl tracking-tighter">
-        <span className="text-black">P</span>
-        <span className="text-gray-500">d</span>
-      </div>
+    <aside className="sticky top-0 flex h-screen w-16 shrink-0 flex-col items-center border-r border-gray-200 bg-white py-4 sm:w-24 sm:py-6 lg:w-36">
+      <img src={logoImg} alt="Logo" className="w-12 sm:w-16 lg:w-28" />
     </aside>
   );
 }
