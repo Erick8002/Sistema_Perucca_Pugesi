@@ -295,61 +295,60 @@ export default function TransactionsTable({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-gray-100">
-        <table className="min-w-[720px] w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-gray-100 text-gray-400 font-medium">
-              <th className="pb-3 w-1/6 font-medium">Vencimento</th>
-              <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
-              <th className="pb-3 w-1/6 font-medium">Categoria</th>
-              <th className="pb-3 w-1/6 font-medium">Valor</th>
-              <th className="pb-3 w-1/6 font-medium">Status</th>
-              <th className="pb-3 font-medium text-right pr-3">Ações</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 text-gray-700">
-            {currentTransactions.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="py-10 text-center text-gray-400">
-                  <FileText className="mx-auto mb-2 h-5 w-5" />
-                  Nenhum lançamento encontrado.
-                </td>
+        <div className="overflow-x-auto rounded-lg border-gray-100">
+          <table className="min-w-[720px] w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-gray-100 text-gray-400 font-medium">
+                <th className="pb-3 w-1/6 font-medium">Vencimento</th>
+                <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
+                <th className="pb-3 w-1/6 font-medium">Categoria</th>
+                <th className="pb-3 w-1/6 font-medium">Valor</th>
+                <th className="pb-3 w-1/6 font-medium">Status</th>
+                <th className="pb-3 font-medium text-right pr-3">Ações</th>
               </tr>
-            ) : (
-              currentTransactions.map((item) => {
-                const currentStatus = getTransactionStatus(item);
-
-                return (
-                  <tr key={item.id} className="hover:bg-gray-50/50">
-                    <td className="py-3">
-                      {item.vencimento.split("-").reverse().join("/")}
-                    </td>
-                    <td className="py-3 font-medium text-gray-900">
-                      {item.fornecedor}
-                    </td>
-                    <td className="py-3 text-gray-500">{item.categoria}</td>
-                    <td className="py-3 font-semibold">
-                      R$ {formatCurrency(item.valor)}
-                    </td>
-                    <td className="py-3">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                          STATUS_STYLES[currentStatus] ||
-                          "bg-gray-100 text-gray-600"
-                        }`}
-                      >
-                        {currentStatus}
-                      </span>
-                    </td>
-                    <td className="py-3 text-right pr-2">
-                      <ActionMenu item={item} />
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className=" divide-y divide-gray-50 text-gray-700">
+              {currentTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-10 text-center text-gray-400">
+                    <FileText className="mx-auto mb-2 h-5 w-5" />
+                    Nenhum lançamento encontrado.
+                  </td>
+                </tr>
+              ) : (
+                currentTransactions.map((item) => {
+                  const currentStatus = getTransactionStatus(item);
+                  return (
+                    <tr key={item.id} className="hover:bg-gray-50/50">
+                      <td className="py-3">
+                        {item.vencimento.split("-").reverse().join("/")}
+                      </td>
+                      <td className="py-3 font-medium text-gray-900">
+                        {item.fornecedor}
+                      </td>
+                      <td className="py-3 text-gray-500">{item.categoria}</td>
+                      <td className="py-3 font-semibold">
+                        R$ {formatCurrency(item.valor)}
+                      </td>
+                      <td className="py-3">
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                            STATUS_STYLES[currentStatus] ||
+                            "bg-gray-100 text-gray-600"
+                          }`}
+                        >
+                          {currentStatus}
+                        </span>
+                      </td>
+                      <td className="py-3 text-right pr-2">
+                          <ActionMenu item={item} />
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 pt-2 border-t border-gray-50">
