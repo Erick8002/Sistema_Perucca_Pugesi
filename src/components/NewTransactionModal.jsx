@@ -25,6 +25,9 @@ const parseCurrencyInput = (value) => {
 
 export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }) {
     const selectRef = useRef(null);
+    const transactionCategoryOptions = categoryOptions.filter(
+      (category) => category !== "Todas as Categorias"
+    );
 
     useEffect(() => {
       function handleClickOutside(event) {
@@ -153,7 +156,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions }
                     <option value="Defensivos">Defensivos</option>
                 </select> */}
                 <CustomSelect 
-                    options={categoryOptions}
+                    options={transactionCategoryOptions}
                     selected={categoria}
                     onSelect={setCategoria}
                 />
