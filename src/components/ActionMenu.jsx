@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { MoreHorizontal, FileText, Printer, Edit3 } from "lucide-react";
+import { MoreHorizontal, FileText, Printer, Edit3, Trash2Icon } from "lucide-react";
 
-export function ActionMenu({ item }) {
+export function ActionMenu({ item, onDelete }) {
   const [isOpen, setIsOpen] = useState(false);
   const [menuPosition, setMenuPosition] = useState(null);
   const buttonRef = useRef(null);
@@ -94,6 +94,15 @@ export function ActionMenu({ item }) {
             className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
           >
             <Edit3 className="w-3.5 h-3.5" /> Editar Lançamento
+          </button>
+          <button 
+            onClick={() => {
+              onDelete(item.id);
+              setIsOpen(false);
+            }}
+            className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+          >
+            <Trash2Icon className="w-3.5 h-3.5" /> Deletar Lançamento
           </button>
         </div>,
         document.body

@@ -21,7 +21,7 @@ export default function TransactionsTable({
   statusOptions,
   monthOptions,
   onPageDataChange,
-  selectedAccount
+  selectedAccount,
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
@@ -31,7 +31,7 @@ export default function TransactionsTable({
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
   const handleSaveTransaction = async (newTransaction) => {
-    if(!selectedAccount) {
+    if (!selectedAccount) {
       alert("Selecione uma conta antes de criar uma transação.");
       return;
     }
@@ -58,13 +58,13 @@ export default function TransactionsTable({
     const responseData = await response.json();
 
     const savedTransaction = {
-      id:responseData.id,
+      id: responseData.id,
       accountId: selectedAccount.id,
       vencimento: responseData.due_date,
       fornecedor: responseData.supplier,
       categoria: responseData.category,
       valor: responseData.amount,
-      status: responseData.status
+      status: responseData.status,
     };
 
     setTransactions((prev) => [savedTransaction, ...prev]);
@@ -72,8 +72,23 @@ export default function TransactionsTable({
     setCurrentPage(1);
   };
 
-  const handleDeleteTransaction = (idToDelete) => {
-    setTransactions((prev) => prev.filter((item) => item.id !== idToDelete));
+  const handleDeleteTransaction = async (idToDelete) => {
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/transactions/${idToDelete}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Não foi possível excluir a transação");
+      }
+
+      setTransactions((prev) => prev.filter((item) => item.id !== idToDelete));
+    } catch (error) {
+      console.error("Erro ao excluir transação: ", error.message);
+    }
   };
 
   const handleMonthSelect = (selectedMonth) => {
@@ -295,60 +310,63 @@ export default function TransactionsTable({
         </div>
       </div>
 
-        <div className="overflow-x-auto rounded-lg border-gray-100">
-          <table className="min-w-[720px] w-full text-left text-xs">
-            <thead>
-              <tr className="border-b border-gray-100 text-gray-400 font-medium">
-                <th className="pb-3 w-1/6 font-medium">Vencimento</th>
-                <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
-                <th className="pb-3 w-1/6 font-medium">Categoria</th>
-                <th className="pb-3 w-1/6 font-medium">Valor</th>
-                <th className="pb-3 w-1/6 font-medium">Status</th>
-                <th className="pb-3 font-medium text-right pr-3">Ações</th>
+      <div className="overflow-x-auto rounded-lg border-gray-100">
+        <table className="min-w-[720px] w-full text-left text-xs">
+          <thead>
+            <tr className="border-b border-gray-100 text-gray-400 font-medium">
+              <th className="pb-3 w-1/6 font-medium">Vencimento</th>
+              <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
+              <th className="pb-3 w-1/6 font-medium">Categoria</th>
+              <th className="pb-3 w-1/6 font-medium">Valor</th>
+              <th className="pb-3 w-1/6 font-medium">Status</th>
+              <th className="pb-3 font-medium text-right pr-3">Ações</th>
+            </tr>
+          </thead>
+          <tbody className=" divide-y divide-gray-50 text-gray-700">
+            {currentTransactions.length === 0 ? (
+              <tr>
+                <td colSpan="6" className="py-10 text-center text-gray-400">
+                  <FileText className="mx-auto mb-2 h-5 w-5" />
+                  Nenhum lançamento encontrado.
+                </td>
               </tr>
-            </thead>
-            <tbody className=" divide-y divide-gray-50 text-gray-700">
-              {currentTransactions.length === 0 ? (
-                <tr>
-                  <td colSpan="6" className="py-10 text-center text-gray-400">
-                    <FileText className="mx-auto mb-2 h-5 w-5" />
-                    Nenhum lançamento encontrado.
-                  </td>
-                </tr>
-              ) : (
-                currentTransactions.map((item) => {
-                  const currentStatus = getTransactionStatus(item);
-                  return (
-                    <tr key={item.id} className="hover:bg-gray-50/50">
-                      <td className="py-3">
-                        {item.vencimento.split("-").reverse().join("/")}
-                      </td>
-                      <td className="py-3 font-medium text-gray-900">
-                        {item.fornecedor}
-                      </td>
-                      <td className="py-3 text-gray-500">{item.categoria}</td>
-                      <td className="py-3 font-semibold">
-                        R$ {formatCurrency(item.valor)}
-                      </td>
-                      <td className="py-3">
-                        <span
-                          className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                            STATUS_STYLES[currentStatus] ||
-                            "bg-gray-100 text-gray-600"
-                          }`}
-                        >
-                          {currentStatus}
-                        </span>
-                      </td>
-                      <td className="py-3 text-right pr-2">
-                          <ActionMenu item={item} />
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+            ) : (
+              currentTransactions.map((item) => {
+                const currentStatus = getTransactionStatus(item);
+                return (
+                  <tr key={item.id} className="hover:bg-gray-50/50">
+                    <td className="py-3">
+                      {item.vencimento.split("-").reverse().join("/")}
+                    </td>
+                    <td className="py-3 font-medium text-gray-900">
+                      {item.fornecedor}
+                    </td>
+                    <td className="py-3 text-gray-500">{item.categoria}</td>
+                    <td className="py-3 font-semibold">
+                      R$ {formatCurrency(item.valor)}
+                    </td>
+                    <td className="py-3">
+                      <span
+                        className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
+                          STATUS_STYLES[currentStatus] ||
+                          "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {currentStatus}
+                      </span>
+                    </td>
+                    <td className="py-3 text-right pr-2">
+                      <ActionMenu
+                        item={item}
+                        onDelete={handleDeleteTransaction}
+                      />
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 pt-2 border-t border-gray-50">

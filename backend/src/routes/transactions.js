@@ -71,4 +71,27 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.delete('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        const result = await pool.query(
+            `DELETE FROM transactions where id = $1 RETURNING id`,
+            [id]
+        );
+
+        if(result.rowCount === 0) {
+            return res.status(404).json({ error: 'Transação não encontrada' });
+        }
+
+        res.json({
+            message: 'Transação excluída com sucesso',
+            id: result.rows[0].id
+        });
+    } catch (error) {
+        console.error('Erro ao excluir transação: ', error.message);
+        res.status(500).json({ error: 'Erro ao excluir transação' });
+    }
+});
+
 module.exports = router;
