@@ -28,10 +28,22 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
     );
+    const initialFormState = {
+      vencimento: '',
+      fornecedor: '',
+      categoria: '',
+      valor: '',
+      status: '',
+      file: null
+    };
+    const [formData, setFormData] = useState(initialFormState);
+    const [categoria, setCategoria] = useState('Selecione');
+    const [status, setStatus] = useState('Selecione');
 
     useEffect(() => {
       function handleClickOutside(event) {
         if (selectRef.current && !selectRef.current.contains(event.target)) {
+          resetForm();
           onClose();
         }
       }
@@ -43,28 +55,22 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       };
     }, [isOpen, onClose]);
 
-    const [formData, setFormaData] = useState({
-        fornecedor: '',
-        categoria: '',
-        valor: '',
-        dueDate: '',
-        status: '',
-        file: null,
-    })
-
-    const [categoria, setCategoria] = useState('Selecione');
-    const [status, setStatus] = useState('Selecione');
-
     if(!isOpen) return null;
+
+    const resetForm = () => {
+      setFormData(initialFormState);
+      setCategoria('Selecione');
+      setStatus('Selecione');
+    };
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        setFormaData((prev) => ({ ...prev, [name]: value}))
+        setFormData((prev) => ({ ...prev, [name]: value}))
     };
 
     const handleFileChange = (e) => {
         if(e.target.files && e.target.files[0]){
-            setFormaData((prev) => ({ ...prev, file: e.target.files[0] }));
+            setFormData((prev) => ({ ...prev, file: e.target.files[0] }));
         }
     };
     
@@ -89,19 +95,14 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           valor: parsedValue,
           status: status === 'Selecione' || !status ? "Pendente" : status
         });
-
-        setFormaData({
-          fornecedor: '',
-          valor: '',
-          dueDate: '',
-          status: '',
-          file: null,
-        });
-        setCategoria('Selecione');
-        setStatus('Selecione');
-
+        resetForm();
         onClose();
     };
+
+    const handleClose = () => {
+      resetForm();
+      onClose();
+    }
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
@@ -118,7 +119,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
               </p>
             </div>
             <button
-              onClick={onClose}
+              onClick={handleClose}
               className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors"
             >
               <X size={20} />
@@ -248,7 +249,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
             <div className="flex justify-end gap-3 pt-4">
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 className="rounded-lg bg-slate-100 px-5 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-200 transition-colors"
               >
                 Cancelar
