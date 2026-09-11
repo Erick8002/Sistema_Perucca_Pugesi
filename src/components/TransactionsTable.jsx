@@ -60,13 +60,13 @@ export default function TransactionsTable({
     const savedTransaction = {
       id: responseData.id,
       accountId: selectedAccount.id,
-      vencimento: responseData.due_date,
+      vencimento: responseData.due_date.slice(0, 10),
       fornecedor: responseData.supplier,
       categoria: responseData.category,
       valor: responseData.amount,
       status: responseData.status,
     };
-
+    
     setTransactions((prev) => [savedTransaction, ...prev]);
     setIsModalOpen(false);
     setCurrentPage(1);
