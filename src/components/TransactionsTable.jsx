@@ -368,16 +368,28 @@ export default function TransactionsTable({
             ) : (
               currentTransactions.map((item) => {
                 const currentStatus = getTransactionStatus(item);
+                const isOverdue = currentStatus === "Atrasado" || currentStatus === "Vencido";
+
                 return (
-                  <tr key={item.id} className="hover:bg-gray-50/50">
-                    <td className="py-3">
+                  <tr 
+                    key={item.id}
+                    className={`
+                      hover:bg-gray-50/50
+                      ${
+                        isOverdue
+                          ? "bg-rose-100/80 hover:bg-rose-100/60 border-rose-100"
+                          : "hover:bg-gray-50/50 border-gray-100"
+                      }
+                    `}
+                  >
+                    <td className={`py-3 ${isOverdue ? "text-rose-700 font-medium" : ""}`}>
                       {item.vencimento.split("-").reverse().join("/")}
                     </td>
-                    <td className="py-3 font-medium text-gray-900">
+                    <td className={`py-3 font-medium ${isOverdue ? "text-rose-900" : "text-gray-900"}`}>
                       {item.fornecedor}
                     </td>
-                    <td className="py-3 text-gray-500">{item.categoria}</td>
-                    <td className="py-3 font-semibold">
+                    <td className={`py-3 ${isOverdue ? "text-rose-800/80" : "text-gray-500"}`}>{item.categoria}</td>
+                    <td className={`py-3 font-semibold ${isOverdue ? "text-rose-700" : ""}`}>
                       R$ {formatCurrency(item.valor)}
                     </td>
                     <td className="px-4 py-3 text-center">

@@ -71,8 +71,35 @@ router.post('/', async (req, res) => {
     }
 });
 
-router.delete('/:id', async (req, res) => {
+router.route('/:id')
+  .patch(async (req, res) => {
+    const id = parseInt(req.params.id, 10);
+    const { status } = req.body;
+
     try {
+      const result = await pool.query(
+        'UPDATE transactions SET status = $1 WHERE id = $2 RETURNING *',
+        [status, id]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ error: 'Transação não encontrada' });
+      }
+
+      return res.status(200).json({ 
+        message: 'Status atualizado com sucesso', 
+        data: result.rows[0] 
+      });
+    } catch (error) {
+      console.error('❌ Erro no PostgreSQL:', error);
+      return res.status(500).json({ 
+        error: 'Erro interno ao atualizar no banco', 
+        detail: error.message 
+      });
+    }
+  })
+  .delete(async (req, res) => {
+      try {
         const { id } = req.params;
 
         const result = await pool.query(
@@ -92,6 +119,6 @@ router.delete('/:id', async (req, res) => {
         console.error('Erro ao excluir transação: ', error.message);
         res.status(500).json({ error: 'Erro ao excluir transação' });
     }
-});
+  });
 
 module.exports = router;
