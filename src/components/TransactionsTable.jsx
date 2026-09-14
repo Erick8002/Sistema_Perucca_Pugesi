@@ -66,7 +66,7 @@ export default function TransactionsTable({
       valor: responseData.amount,
       status: responseData.status,
     };
-    
+
     setTransactions((prev) => [savedTransaction, ...prev]);
     setIsModalOpen(false);
     setCurrentPage(1);
@@ -105,6 +105,41 @@ export default function TransactionsTable({
   const handleEndDateChange = (e) => {
     setEndDate(e.target.value);
     setMonthTableFilter(monthOptions[0]);
+  };
+
+  const handleToggleStatus = async (transaction) => {
+    const newStatus = transaction.status === "Pago" ? "Pendente" : "Pago";
+
+    setTransactions((prevTransactions) =>
+      prevTransactions.map((item) =>
+        item.id === transaction.id ? { ...item, status: newStatus } : item,
+      ),
+    );
+
+    try {
+      const response = await fetch(
+        `http://localhost:3001/api/transactions/${transaction.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error("Falha ao atualizar status no servidor");
+      }
+    } catch (error) {
+      console.error("Erro na requisição: ", error);
+
+      setTransactions((prevTransactions) =>
+        prevTransactions.map((item) =>
+          item.id === transaction.id ? { ...item, status: newStatus } : item,
+        ),
+      );
+    }
   };
 
   useEffect(() => {
@@ -317,8 +352,8 @@ export default function TransactionsTable({
               <th className="pb-3 w-1/6 font-medium">Vencimento</th>
               <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
               <th className="pb-3 w-1/6 font-medium">Categoria</th>
-              <th className="pb-3 w-1/6 font-medium">Valor</th>
-              <th className="pb-3 w-1/6 font-medium">Status</th>
+              <th className="pb-3 w-1.5/6 font-medium">Valor</th>
+              <th className="pb-3 w-0.5/6 font-medium text-center">Pago</th>
               <th className="pb-3 font-medium text-right pr-3">Ações</th>
             </tr>
           </thead>
@@ -345,15 +380,44 @@ export default function TransactionsTable({
                     <td className="py-3 font-semibold">
                       R$ {formatCurrency(item.valor)}
                     </td>
-                    <td className="py-3">
-                      <span
-                        className={`px-2.5 py-1 rounded-full text-[10px] font-medium ${
-                          STATUS_STYLES[currentStatus] ||
-                          "bg-gray-100 text-gray-600"
-                        }`}
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleStatus(item)}
+                        title={
+                          currentStatus === "Pago"
+                            ? "Marcar como Pendente"
+                            : "Marcar como Pago"
+                        }
+                        className="group relative inline-flex item-center justify-center p-1 focus:outline-none"
                       >
-                        {currentStatus}
-                      </span>
+                        {currentStatus === "Pago" && (
+                          <span className="absolute inset-2 rounded-full bg-emerald-400 animate-ping-once pointer-events-none" />
+                        )}
+                        <div
+                          className={`
+                            relative w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform active:scale-75 group-hover:scale-110
+                            ${
+                              currentStatus === "Pago"
+                                ? "bg-emerald-500 border-emerald-500 shadow-md shadow-emerald-500/30"
+                                : "border-neutral-300 bg-white group-hover:border-emerald-400 group-hover:bg-emerald-50/30"
+                            }
+                          `}
+                        >
+                          <svg
+                            className={`
+                              w-3.5 h-3.5 text-white
+                              ${currentStatus === "Pago" ? "animate-pop-check" : "opacity-0 scale-0"}
+                            `}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            strokeWidth="3"
+                          >
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 14l4 4L18 7" />
+                          </svg>
+                        </div>
+                      </button>
                     </td>
                     <td className="py-3 text-right pr-2">
                       <ActionMenu

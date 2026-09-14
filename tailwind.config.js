@@ -6,6 +6,23 @@ export default {
   ],
   theme: {
     extend: {
+      keyframes: {
+        // Animação do visto surgindo e girando
+        'pop-check': {
+          '0%': { transform: 'scale(0) rotate(-45deg)', opacity: '0' },
+           '70%': { transform: 'scale(1.25) rotate(5deg)', opacity: '1' },
+          '100%': { transform: 'scale(1) rotate(0deg)', opacity: '1' },
+        },
+        // Animação do pulso expansivo para fora ao clicar
+        'ping-once': {
+          '0%': { transform: 'scale(1)', opacity: '0.8' },
+          '100%': { transform: 'scale(1.6)', opacity: '0' },
+        }
+      },
+      animation: {
+        'pop-check': 'pop-check 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+        'ping-once': 'ping-once 0.4s ease-out forwards',
+      },
       colors: {
         primary: {
           50: "#f5f0ff",
