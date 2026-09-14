@@ -3,6 +3,7 @@ import CustomSelect from "./CustomSelect";
 import { DateInput } from "./DateInput";
 import { ActionMenu } from "./ActionMenu";
 import { NewTransactionModal } from "./NewTransactionModal";
+import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
 import { Search, FileText, Plus, BetweenHorizonalEnd } from "lucide-react";
 
 export default function TransactionsTable({
@@ -27,6 +28,8 @@ export default function TransactionsTable({
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
   const [searchTerm, setSearchTerm] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(null);
 
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
@@ -142,6 +145,15 @@ export default function TransactionsTable({
     }
   };
 
+  const handleRowClick = (transaction) => {
+    setSelectedTransaction(transaction);
+    setIsDrawerOpen(true);
+  };
+
+  const handleCloseDrawer = () => {
+    setIsDrawerOpen(false);
+  };
+
   useEffect(() => {
     const activeDate = startDate || endDate;
     const activeStartDateMonth = startDate ? startDate.split("-")[1] : false;
@@ -217,23 +229,30 @@ export default function TransactionsTable({
   };
 
   const getTransactionStatus = (item) => {
+    if (!item) return "Pendente";
+
     if (item.status === "Pago") return "Pago";
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0); //Setando a hr, min, seg e ms para zero para ele fazer um comparativo apenas das datas
+    const rawDate = item.vencimento;
+    if (!rawDate) return "Pendente";
 
-    const [year, month, day] = item.vencimento.split("-"); // Utilizando o split('/') para tirar a barra do texto e guardar apenas o número da data
-    const dueDate = new Date(year, month - 1, day); // criando o objeto da data de vencimento, o "month-1" pois o js conta os meses do (0)
+    try {
+      const cleanDateStr = String(rawDate).split("T")[0];
+      const parts = cleanDateStr.split("-");
 
-    // console.log(
-    //   "Data do item:",
-    //   item.vencimento,
-    //   "=> Convertida para:",
-    //   dueDate,
-    // );
+      if (parts.length !== 3) return "Pendente";
 
-    if (dueDate < today) {
-      return "Atrasado";
+      const [year, month, day] = parts.map(Number);
+      const dueDate = new Date(year, month - 1, day);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0); //Setando a hr, min, seg e ms para zero para ele fazer um comparativo apenas das datas
+
+      if (dueDate < today) {
+        return "Atrasado";
+      }
+    } catch (error) {
+      console.error("Erro ao validar data de vencimento: ", error);
+      return "Pendente";
     }
 
     return "Pendente";
@@ -265,149 +284,175 @@ export default function TransactionsTable({
   }, [currentTransactions, onPageDataChange]);
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">
-      <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-        <h2 className="text-base font-bold text-gray-800 ">Todos os Gastos</h2>
+    <>
+      {/* Drawer mantida no topo, mas dentro da Fragment */}
+      <TransactionDetailsDrawer
+        getTransactionStatus={getTransactionStatus}
+        transaction={selectedTransaction}
+        isOpen={isDrawerOpen}
+        onClose={handleCloseDrawer}
+      />
 
-        <div className="flex items-center gap-2 flex-1 max-w-3xl">
-          <div className="relative flex-1">
-            <input
-              type="text"
-              placeholder="Pesquisar por fornecedor ou fatura..."
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              className="w-full bg-gray-50 border border-gray-200 rounded-md pl-3 pr-8 py-1.5 text-xs focus:outline-none focus:border-purple-500"
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">
+        <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+          <h2 className="text-base font-bold text-gray-800 ">
+            Todos os Gastos
+          </h2>
+
+          <div className="flex items-center gap-2 flex-1 max-w-3xl">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="Pesquisar por fornecedor ou fatura..."
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                className="w-full bg-gray-50 border border-gray-200 rounded-md pl-3 pr-8 py-1.5 text-xs focus:outline-none focus:border-purple-500"
+              />
+              <Search className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-2" />
+            </div>
+
+            <div className="p-2">
+              <CustomSelect
+                options={categoryOptions}
+                selected={categoryTableHeader}
+                onSelect={setCategoryTableHeader}
+              />
+            </div>
+
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="bg-[#4A2E56] hover:bg-[#382242] text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0"
+            >
+              <Plus className="w-3.5 h-3.5" /> Novo Gasto
+            </button>
+
+            <NewTransactionModal
+              isOpen={isModalOpen}
+              onClose={() => setIsModalOpen(false)}
+              onSave={handleSaveTransaction}
+              categoryOptions={categoryOptions}
+              statusOptions={statusOptions}
             />
-            <Search className="w-3.5 h-3.5 text-gray-400 absolute right-2.5 top-2" />
           </div>
+        </div>
 
+        <div className="flex flex-col items-stretch gap-3 text-xs text-gray-500 sm:flex-row sm:items-center">
           <div className="p-2">
             <CustomSelect
-              options={categoryOptions}
-              selected={categoryTableHeader}
-              onSelect={setCategoryTableHeader}
+              options={monthOptions}
+              selected={monthTableFilter}
+              onSelect={handleMonthSelect}
+              currentOption={currentMonthIndex}
             />
           </div>
+          <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <DateInput
+                value={startDate}
+                onChange={handleStartDateChange}
+                placeholder={"Data Inicial"}
+              />
+              <DateInput
+                value={endDate}
+                onChange={handleEndDateChange}
+                placeholder={"Data Final"}
+              />
+            </div>
 
-          <button
-            onClick={() => setIsModalOpen(true)}
-            className="bg-[#4A2E56] hover:bg-[#382242] text-white font-medium px-3 py-1.5 rounded-md flex items-center gap-1 shrink-0"
-          >
-            <Plus className="w-3.5 h-3.5" /> Novo Gasto
-          </button>
-
-          <NewTransactionModal
-            isOpen={isModalOpen}
-            onClose={() => setIsModalOpen(false)}
-            onSave={handleSaveTransaction}
-            categoryOptions={categoryOptions}
-            statusOptions={statusOptions}
-          />
-        </div>
-      </div>
-
-      <div className="flex flex-col items-stretch gap-3 text-xs text-gray-500 sm:flex-row sm:items-center">
-        <div className="p-2">
-          <CustomSelect
-            options={monthOptions}
-            selected={monthTableFilter}
-            onSelect={handleMonthSelect}
-            currentOption={currentMonthIndex}
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <DateInput
-              value={startDate}
-              onChange={handleStartDateChange}
-              placeholder={"Data Inicial"}
-            />
-            <DateInput
-              value={endDate}
-              onChange={handleEndDateChange}
-              placeholder={"Data Final"}
-            />
+            {(startDate || endDate || monthTableFilter !== monthOptions[0]) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setStartDate("");
+                  setEndDate("");
+                  setMonthTableFilter(monthOptions[0]);
+                }}
+                className="text-xs font-medium text-gray-500 hover:text-purple-600 transition-colors underline cursor-pointer"
+              >
+                Limpar datas
+              </button>
+            )}
           </div>
-
-          {(startDate || endDate || monthTableFilter !== monthOptions[0]) && (
-            <button
-              type="button"
-              onClick={() => {
-                setStartDate("");
-                setEndDate("");
-                setMonthTableFilter(monthOptions[0]);
-              }}
-              className="text-xs font-medium text-gray-500 hover:text-purple-600 transition-colors underline cursor-pointer"
-            >
-              Limpar datas
-            </button>
-          )}
         </div>
-      </div>
 
-      <div className="overflow-x-auto rounded-lg border-gray-100">
-        <table className="min-w-[720px] w-full text-left text-xs">
-          <thead>
-            <tr className="border-b border-gray-100 text-gray-400 font-medium">
-              <th className="pb-3 w-1/6 font-medium">Vencimento</th>
-              <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
-              <th className="pb-3 w-1/6 font-medium">Categoria</th>
-              <th className="pb-3 w-1.5/6 font-medium">Valor</th>
-              <th className="pb-3 w-0.5/6 font-medium text-center">Pago</th>
-              <th className="pb-3 font-medium text-right pr-3">Ações</th>
-            </tr>
-          </thead>
-          <tbody className=" divide-y divide-gray-50 text-gray-700">
-            {currentTransactions.length === 0 ? (
-              <tr>
-                <td colSpan="6" className="py-10 text-center text-gray-400">
-                  <FileText className="mx-auto mb-2 h-5 w-5" />
-                  Nenhum lançamento encontrado.
-                </td>
+        <div className="overflow-x-auto rounded-lg border-gray-100">
+          <table className="min-w-[720px] w-full text-left text-xs">
+            <thead>
+              <tr className="border-b border-gray-100 text-gray-400 font-medium">
+                <th className="pb-3 w-1/6 font-medium">Vencimento</th>
+                <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
+                <th className="pb-3 w-1/6 font-medium">Categoria</th>
+                <th className="pb-3 w-1.5/6 font-medium">Valor</th>
+                <th className="pb-3 w-0.5/6 font-medium text-center">Pago</th>
+                <th className="pb-3 font-medium text-right pr-3">Ações</th>
               </tr>
-            ) : (
-              currentTransactions.map((item) => {
-                const currentStatus = getTransactionStatus(item);
-                const isOverdue = currentStatus === "Atrasado" || currentStatus === "Vencido";
+            </thead>
+            <tbody className=" divide-y divide-gray-50 text-gray-700">
+              {currentTransactions.length === 0 ? (
+                <tr>
+                  <td colSpan="6" className="py-10 text-center text-gray-400">
+                    <FileText className="mx-auto mb-2 h-5 w-5" />
+                    Nenhum lançamento encontrado.
+                  </td>
+                </tr>
+              ) : (
+                currentTransactions.map((item) => {
+                  const currentStatus = getTransactionStatus(item);
+                  const isOverdue =
+                    currentStatus === "Atrasado" || currentStatus === "Vencido";
 
-                return (
-                  <tr 
-                    key={item.id}
-                    className={`
-                      hover:bg-gray-50/50
+                  return (
+                    <tr
+                      key={item.id}
+                      onClick={() => handleRowClick(item)}
+                      className={`
+                      cursor-pointer hover:bg-gray-50/50
                       ${
                         isOverdue
                           ? "bg-rose-100/80 hover:bg-rose-100/60 border-rose-100"
                           : "hover:bg-gray-50/50 border-gray-100"
                       }
                     `}
-                  >
-                    <td className={`py-3 ${isOverdue ? "text-rose-700 font-medium" : ""}`}>
-                      {item.vencimento.split("-").reverse().join("/")}
-                    </td>
-                    <td className={`py-3 font-medium ${isOverdue ? "text-rose-900" : "text-gray-900"}`}>
-                      {item.fornecedor}
-                    </td>
-                    <td className={`py-3 ${isOverdue ? "text-rose-800/80" : "text-gray-500"}`}>{item.categoria}</td>
-                    <td className={`py-3 font-semibold ${isOverdue ? "text-rose-700" : ""}`}>
-                      R$ {formatCurrency(item.valor)}
-                    </td>
-                    <td className="px-4 py-3 text-center">
-                      <button
-                        type="button"
-                        onClick={() => handleToggleStatus(item)}
-                        title={
-                          currentStatus === "Pago"
-                            ? "Marcar como Pendente"
-                            : "Marcar como Pago"
-                        }
-                        className="group relative inline-flex item-center justify-center p-1 focus:outline-none"
+                    >
+                      <td
+                        className={`py-3 ${isOverdue ? "text-rose-700 font-medium" : ""}`}
                       >
-                        {currentStatus === "Pago" && (
-                          <span className="absolute inset-2 rounded-full bg-emerald-400 animate-ping-once pointer-events-none" />
-                        )}
-                        <div
-                          className={`
+                        {item.vencimento.split("-").reverse().join("/")}
+                      </td>
+                      <td
+                        className={`py-3 font-medium ${isOverdue ? "text-rose-900" : "text-gray-900"}`}
+                      >
+                        {item.fornecedor}
+                      </td>
+                      <td
+                        className={`py-3 ${isOverdue ? "text-rose-800/80" : "text-gray-500"}`}
+                      >
+                        {item.categoria}
+                      </td>
+                      <td
+                        className={`py-3 font-semibold ${isOverdue ? "text-rose-700" : ""}`}
+                      >
+                        R$ {formatCurrency(item.valor)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleToggleStatus(item);
+                          }}
+                          title={
+                            currentStatus === "Pago"
+                              ? "Marcar como Pendente"
+                              : "Marcar como Pago"
+                          }
+                          className="group relative inline-flex item-center justify-center p-1 focus:outline-none"
+                        >
+                          {currentStatus === "Pago" && (
+                            <span className="absolute inset-2 rounded-full bg-emerald-400 animate-ping-once pointer-events-none" />
+                          )}
+                          <div
+                            className={`
                             relative w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ease-[cubic-bezier(0.34,1.56,0.64,1)] transform active:scale-75 group-hover:scale-110
                             ${
                               currentStatus === "Pago"
@@ -415,96 +460,109 @@ export default function TransactionsTable({
                                 : "border-neutral-300 bg-white group-hover:border-emerald-400 group-hover:bg-emerald-50/30"
                             }
                           `}
-                        >
-                          <svg
-                            className={`
+                          >
+                            <svg
+                              className={`
                               w-3.5 h-3.5 text-white
                               ${currentStatus === "Pago" ? "animate-pop-check" : "opacity-0 scale-0"}
                             `}
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                            strokeWidth="3"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 14l4 4L18 7" />
-                          </svg>
-                        </div>
-                      </button>
-                    </td>
-                    <td className="py-3 text-right pr-2">
-                      <ActionMenu
-                        item={item}
-                        onDelete={handleDeleteTransaction}
-                      />
-                    </td>
-                  </tr>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 pt-2 border-t border-gray-50">
-        <span>
-          Mostrando {sortedTransactions.length === 0 ? 0 : indexOfFirstItem + 1}{" "}
-          - {Math.min(indexOfLastItem, sortedTransactions.length)} de{" "}
-          {sortedTransactions.length} lançamentos
-        </span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-            disabled={currentPage === 1}
-            className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
-          >
-            ‹
-          </button>
-
-          {Array.from({ length: totalPages }, (_, index) => {
-            const pageNumber = index + 1;
-            return (
-              <button
-                key={pageNumber}
-                onClick={() => setCurrentPage(pageNumber)}
-                className={`px-2.5 py-1 text-xs rounded-ms transition-colors ${
-                  currentPage === pageNumber
-                    ? "bg-purple-600 text-white font-semibold rounded"
-                    : "text-gray-600 hover:bg-gray-100"
-                }`}
-              >
-                {pageNumber}
-              </button>
-            );
-          })}
-
-          <button
-            onClick={() =>
-              setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-            }
-            disabled={currentPage === totalPages || totalPages === 0}
-            className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
-          >
-            ›
-          </button>
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                              strokeWidth="3"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M4 14l4 4L18 7"
+                              />
+                            </svg>
+                          </div>
+                        </button>
+                      </td>
+                      <td className="py-3 text-right pr-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                          }}
+                        >
+                          <ActionMenu
+                            item={item}
+                            onDelete={handleDeleteTransaction}
+                          />
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
-        <div>
-          Itens por página:{" "}
-          <select
-            value={itemsPerPage}
-            onChange={(e) => {
-              setItemsPerPage(Number(e.target.value));
-              setCurrentPage(1);
-            }}
-            className="bg-transparent border rounded text-[11px]"
-          >
-            <option value={1}>1</option>
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+
+        <div className="flex flex-wrap items-center justify-between gap-3 text-[11px] text-gray-400 pt-2 border-t border-gray-50">
+          <span>
+            Mostrando{" "}
+            {sortedTransactions.length === 0 ? 0 : indexOfFirstItem + 1} -{" "}
+            {Math.min(indexOfLastItem, sortedTransactions.length)} de{" "}
+            {sortedTransactions.length} lançamentos
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
+            >
+              ‹
+            </button>
+
+            {Array.from({ length: totalPages }, (_, index) => {
+              const pageNumber = index + 1;
+              return (
+                <button
+                  key={pageNumber}
+                  onClick={() => setCurrentPage(pageNumber)}
+                  className={`px-2.5 py-1 text-xs rounded-ms transition-colors ${
+                    currentPage === pageNumber
+                      ? "bg-purple-600 text-white font-semibold rounded"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {pageNumber}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+              disabled={currentPage === totalPages || totalPages === 0}
+              className="px-2 py-1 text-xs text-gray-500 disabled:opacity-30 hover:bg-gray-100 rounded"
+            >
+              ›
+            </button>
+          </div>
+          <div>
+            Itens por página:{" "}
+            <select
+              value={itemsPerPage}
+              onChange={(e) => {
+                setItemsPerPage(Number(e.target.value));
+                setCurrentPage(1);
+              }}
+              className="bg-transparent border rounded text-[11px]"
+            >
+              <option value={1}>1</option>
+              <option value={5}>5</option>
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
