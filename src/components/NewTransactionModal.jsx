@@ -34,11 +34,13 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       categoria: '',
       valor: '',
       status: '',
+      installment: '1',
       file: null
     };
     const [formData, setFormData] = useState(initialFormState);
     const [categoria, setCategoria] = useState('Selecione');
     const [status, setStatus] = useState('Selecione');
+    const [installment, setInstallment] = useState("1");
 
     useEffect(() => {
       function handleClickOutside(event) {
@@ -61,6 +63,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       setFormData(initialFormState);
       setCategoria('Selecione');
       setStatus('Selecione');
+      setInstallment("1");
     };
 
     const handleChange = (e) => {
@@ -93,7 +96,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           ...formData,
           categoria: categoria,
           valor: parsedValue,
-          status: status === 'Selecione' || !status ? "Pendente" : status
+          status: status === 'Selecione' || !status ? "Pendente" : status,
+          installment: formData.installment || '1'
         });
         resetForm();
         onClose();
@@ -136,7 +140,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
               <input
                 type="text"
                 name="fornecedor"
-                value={formData.fornecedor}
+                value={formData.fornecedor || ""}
                 onChange={handleChange}
                 placeholder="Digite o fornecedor"
                 className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-purple-500 focus:bg-white focus:outline-none"
@@ -174,7 +178,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                   type="text"
                   inputMode="decimal"
                   name="valor"
-                  value={formData.valor}
+                  value={formData.valor || ""}
                   onChange={handleChange}
                   placeholder="Digite o valor"
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-purple-500 focus:bg-white focus:outline-none"
@@ -191,7 +195,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 <input
                   type="date"
                   name="dueDate"
-                  value={formData.dueDate}
+                  value={formData.dueDate || ""}
                   onChange={handleChange}
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-600 focus:border-purple-500 focus:bg-white focus:outline-none"
                 />
@@ -217,6 +221,28 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                     selected={status}
                     onSelect={setStatus}
                   />
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-xs font-medium text-slate-600">Parcelas</label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={formData.installment || ""}
+                  onChange={(e) => {
+                    const value = e.target.value.replace(/\D/g, "");
+                    setFormData((prev) => ({
+                      ...prev,
+                      installment: value,
+                    }));
+                  }}
+                  onBlur={() => {
+                    const num = parseInt(formData.installment, 10);
+                    if(!formData.installment || isNaN(num) || num < 1) {
+                      setFormData((prev) => ({ ...prev, installment: "1"}))
+                    }
+                  }}
+                  className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
+                />
               </div>
             </div>
 

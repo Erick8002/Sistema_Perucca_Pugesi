@@ -10,7 +10,7 @@ export default function Header({ accounts = [], selectedAccount, onAccountSelect
     <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-start">
       <div>
         <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-          Olá, Rosangela! 👋
+          Olá, {selectedName}! 👋
         </h1>
         <p className="text-sm text-gray-500">
           Acompanhe e gerencie os lançamentos da sua empresa

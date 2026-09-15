@@ -6,6 +6,26 @@ import { NewTransactionModal } from "./NewTransactionModal";
 import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
 import { Search, FileText, Plus, BetweenHorizonalEnd } from "lucide-react";
 
+const getInstallmentProgress = (transaction) => {
+  if (!transaction) return "0/1";
+
+  const total_installment =
+    transaction.total_installment || transaction.total_parcelas || 1;
+  const current_installment =
+    transaction.current_installment || transaction.parcela_atual || 1;
+  const status = transaction.status;
+
+  let paidCount = 0;
+
+  if (status === "Pago") {
+    paidCount = current_installment;
+  } else {
+    paidCount = Math.max(0, current_installment - 1);
+  }
+
+  return `${paidCount}/${total_installment}`;
+};
+
 export default function TransactionsTable({
   filterTransactions,
   transactions,
@@ -42,37 +62,61 @@ export default function TransactionsTable({
     const validDate = rawDate
       ? rawDate
       : new Date().toISOString().split("T")[0];
+      
+      const totalInstallmentNum = parseInt(newTransaction.installment, 10) || 1;
 
-    const response = await fetch("http://localhost:3001/api/transactions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+      console.log("Payload enviado para API:", {
         account_id: selectedAccount.id,
         due_date: validDate,
+        total_installment: totalInstallmentNum,
         supplier: newTransaction.fornecedor,
         category: newTransaction.categoria,
         amount: newTransaction.valor,
-        status: newTransaction.status,
-      }),
-    });
+        status: newTransaction.status || "Pendente",
+      });
+      
+    try {
 
-    const responseData = await response.json();
+      const response = await fetch("http://localhost:3001/api/transactions", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          account_id: selectedAccount.id,
+          due_date: validDate,
+          total_installment: totalInstallmentNum,
+          supplier: newTransaction.fornecedor,
+          category: newTransaction.categoria,
+          amount: newTransaction.valor,
+          status: newTransaction.status,
+        }),
+      });
 
-    const savedTransaction = {
-      id: responseData.id,
-      accountId: selectedAccount.id,
-      vencimento: responseData.due_date.slice(0, 10),
-      fornecedor: responseData.supplier,
-      categoria: responseData.category,
-      valor: responseData.amount,
-      status: responseData.status,
-    };
+      const responseData = await response.json();
 
-    setTransactions((prev) => [savedTransaction, ...prev]);
-    setIsModalOpen(false);
-    setCurrentPage(1);
+      const newItems = Array.isArray(responseData) ? responseData : [responseData];
+
+      const formatedTransaction = newItems.map((item) => ({
+        id: item.id,
+        accountId: item.account_id || selectedAccount.id,
+        vencimento: item.due_date ? String(item.due_date).slice(0, 10) : validDate,
+        fornecedor: item.supplier,
+        categoria: item.category,
+        valor: Number(item.amount),
+        status: item.status,
+        current_installment: item.current_installment,
+        total_installment: item.total_installment,
+      }));
+
+      setTransactions((prev) => [...formatedTransaction, ...prev]);
+      setIsModalOpen(false);
+      setCurrentPage(1);
+
+    } catch (error) {
+      console.error("Erro ao salvar transação: ", error);
+      alert("Falha ao salvar a transação.");
+    }
   };
 
   const handleDeleteTransaction = async (idToDelete) => {
@@ -287,10 +331,11 @@ export default function TransactionsTable({
     <>
       {/* Drawer mantida no topo, mas dentro da Fragment */}
       <TransactionDetailsDrawer
-        getTransactionStatus={getTransactionStatus}
         transaction={selectedTransaction}
         isOpen={isDrawerOpen}
         onClose={handleCloseDrawer}
+        getTransactionStatus={getTransactionStatus}
+        getInstallmentProgress={getInstallmentProgress}
       />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">
@@ -379,12 +424,13 @@ export default function TransactionsTable({
           <table className="min-w-[720px] w-full text-left text-xs">
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 font-medium">
-                <th className="pb-3 w-1/6 font-medium">Vencimento</th>
-                <th className="pb-3 w-2/6 font-medium">Fornecedor</th>
-                <th className="pb-3 w-1/6 font-medium">Categoria</th>
-                <th className="pb-3 w-1.5/6 font-medium">Valor</th>
-                <th className="pb-3 w-0.5/6 font-medium text-center">Pago</th>
-                <th className="pb-3 font-medium text-right pr-3">Ações</th>
+                <th className="pb-3 pl-4 w-[15%] font-medium">Vencimento</th>
+                <th className="pb-3 w-[25%] font-medium">Fornecedor</th>
+                <th className="pb-3 w-[20%] font-medium">Categoria</th>
+                <th className="pb-3 w-[15%] font-medium">Valor</th>
+                <th className="pb-3 pl-2 w-[10%] font-medium">Parcelas</th>
+                <th className="pb-3 w-[8%] font-medium text-center">Pago</th>
+                <th className="pb-3 w-[7%] font-medium text-right pr-3">Ações</th>
               </tr>
             </thead>
             <tbody className=" divide-y divide-gray-50 text-gray-700">
@@ -406,7 +452,7 @@ export default function TransactionsTable({
                       key={item.id}
                       onClick={() => handleRowClick(item)}
                       className={`
-                      cursor-pointer hover:bg-gray-50/50
+                      cursor-pointer hover:bg-gray-50/50 
                       ${
                         isOverdue
                           ? "bg-rose-100/80 hover:bg-rose-100/60 border-rose-100"
@@ -415,7 +461,7 @@ export default function TransactionsTable({
                     `}
                     >
                       <td
-                        className={`py-3 ${isOverdue ? "text-rose-700 font-medium" : ""}`}
+                        className={`py-3 pl-4 ${isOverdue ? "text-rose-700 font-medium" : ""}`}
                       >
                         {item.vencimento.split("-").reverse().join("/")}
                       </td>
@@ -430,9 +476,16 @@ export default function TransactionsTable({
                         {item.categoria}
                       </td>
                       <td
-                        className={`py-3 font-semibold ${isOverdue ? "text-rose-700" : ""}`}
+                        className={`py-3 text-left font-semibold ${isOverdue ? "text-rose-700" : ""}`}
                       >
                         R$ {formatCurrency(item.valor)}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center">
+                          <span className="bg-slate-100 text-slate-600 text-[11px] font-semibold px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
+                            {getInstallmentProgress(item)}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-4 py-3 text-center">
                         <button
@@ -481,8 +534,7 @@ export default function TransactionsTable({
                         </button>
                       </td>
                       <td className="py-3 text-right pr-2">
-                        <button
-                          type="button"
+                        <div
                           onClick={(e) => {
                             e.stopPropagation();
                           }}
@@ -491,7 +543,7 @@ export default function TransactionsTable({
                             item={item}
                             onDelete={handleDeleteTransaction}
                           />
-                        </button>
+                        </div>
                       </td>
                     </tr>
                   );

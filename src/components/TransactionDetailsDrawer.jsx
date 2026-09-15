@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   AlertCircle,
+  Layers,
 } from "lucide-react";
 
 export function TransactionDetailsDrawer({
@@ -14,6 +15,7 @@ export function TransactionDetailsDrawer({
   isOpen,
   onClose,
   getTransactionStatus,
+  getInstallmentProgress,
 }) {
   if (!transaction) return null;
 
@@ -133,6 +135,21 @@ export function TransactionDetailsDrawer({
                 <p className="text-xs text-slate-400">Categoria / Tipo</p>
                 <p className="text-sm font-semibold text-slate-800">
                   {transaction.categoria || "Geral"}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3.5 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100/80">
+              <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-600">
+                <Layers className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs text-slate-400">Parcelamento</p>
+                <p className="text-sm font-semibold text-slate-800">
+                  {getInstallmentProgress(transaction)} parcelas pagas
+                  <span className="text-xs font-normal text-slate-500 ml-1.5">
+                    (Parcela {transaction.current_installment || 1} de{" "}
+                    {transaction.total_installments || 1})
+                  </span>
                 </p>
               </div>
             </div>
