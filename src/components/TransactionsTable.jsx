@@ -30,6 +30,7 @@ export default function TransactionsTable({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(null);
+  const [editingTransaction, setEditingTransaction] = useState(null);
 
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
@@ -38,6 +39,13 @@ export default function TransactionsTable({
       alert("Selecione uma conta antes de criar uma transação.");
       return;
     }
+
+    const isEditing = Boolean(editingTransaction?.id);
+    const url = isEditing
+      ? `http://localhost:3001/api/transactions/${editingTransaction.id}`
+      : "http://localhost:3001/api/transactions";
+
+    const method = isEditing ? "PUT" : "POST";
     const rawDate = newTransaction.vencimento || newTransaction.dueDate;
     const validDate = rawDate
       ? rawDate
@@ -54,44 +62,71 @@ export default function TransactionsTable({
         amount: newTransaction.valor,
         status: newTransaction.status || "Pendente",
       });
+
+      const payload = {
+        account_id: selectedAccount.id,
+        due_date: validDate,
+        supplier: newTransaction.fornecedor,
+        category: newTransaction.categoria,
+        amount: Number(newTransaction.valor),
+        status: newTransaction.status || "Pendente",
+        ...(isEditing ? {} : { total_installment: totalInstallmentNum }),
+      }
       
     try {
-
-      const response = await fetch("http://localhost:3001/api/transactions", {
-        method: "POST",
+      const response = await fetch(url, {
+        method: method,
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          account_id: selectedAccount.id,
-          due_date: validDate,
-          total_installment: totalInstallmentNum,
-          supplier: newTransaction.fornecedor,
-          category: newTransaction.categoria,
-          amount: newTransaction.valor,
-          status: newTransaction.status
-        }),
+        body: JSON.stringify(payload),
       });
+
+      if(!response.ok) {
+        throw new Error(`Erro na requisição: ${response.statusText}`);
+      }
 
       const responseData = await response.json();
 
-      const newItems = Array.isArray(responseData) ? responseData : [responseData];
+      if (isEditing) {
+      const updatedFormatted = {
+        id: responseData.id,
+        accountId: responseData.account_id || selectedAccount.id,
+        vencimento: responseData.due_date ? String(responseData.due_date).slice(0, 10) : validDate,
+        fornecedor: responseData.supplier,
+        categoria: responseData.category,
+        valor: Number(responseData.amount),
+        status: responseData.status,
+        current_installment: responseData.current_installment,
+        total_installment: responseData.total_installment,
+        group_id: responseData.group_id,
+      };
 
-      const formatedTransaction = newItems.map((item) => ({
-        id: item.id,
-        accountId: item.account_id || selectedAccount.id,
-        vencimento: item.due_date ? String(item.due_date).slice(0, 10) : validDate,
-        fornecedor: item.supplier,
-        categoria: item.category,
-        valor: Number(item.amount),
-        status: item.status,
-        current_installment: item.current_installment,
-        total_installment: item.total_installment,
-        group_id: item.group_id
-      }));
+      setTransactions((prev) =>
+          prev.map((item) => (item.id === updatedFormatted.id ? updatedFormatted : item))
+        );
+      } else {
+        const newItems = Array.isArray(responseData) ? responseData : [responseData];
 
-      setTransactions((prev) => [...formatedTransaction, ...prev]);
+        const formatedTransactions = newItems.map((item) => ({
+          id: item.id,
+          accountId: item.account_id || selectedAccount.id,
+          vencimento: item.due_date ? String(item.due_date).slice(0, 10) : validDate,
+          fornecedor: item.supplier,
+          categoria: item.category,
+          valor: Number(item.amount),
+          status: item.status,
+          current_installment: item.current_installment,
+          total_installment: item.total_installment,
+          group_id: item.group_id,
+        }));
+
+        // Adiciona as novas parcelas no topo da lista
+        setTransactions((prev) => [...formatedTransactions, ...prev]);
+      }
+
       setIsModalOpen(false);
+      setEditingTransaction(null);
       setCurrentPage(1);
 
     } catch (error) {
@@ -178,6 +213,22 @@ export default function TransactionsTable({
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
   };
+
+  const handleOpenCreateModal = () => {
+    setEditingTransaction(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (transaction) => {
+    console.log("1. Transação recebida na tabela:", transaction);
+    setEditingTransaction(transaction);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingTransaction(null);
+  }
 
   const getInstallmentProgress = (transaction, allTransactions = []) => {
     if (!transaction) return "0/1";
@@ -385,6 +436,7 @@ export default function TransactionsTable({
               onSave={handleSaveTransaction}
               categoryOptions={categoryOptions}
               statusOptions={statusOptions}
+              editingTransaction={editingTransaction}
             />
           </div>
         </div>
@@ -556,6 +608,7 @@ export default function TransactionsTable({
                           <ActionMenu
                             item={item}
                             onDelete={handleDeleteTransaction}
+                            onEdit={handleOpenEditModal}
                           />
                         </div>
                       </td>

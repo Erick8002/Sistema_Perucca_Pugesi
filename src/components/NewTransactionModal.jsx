@@ -23,7 +23,7 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction }) {
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -57,6 +57,29 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }, [isOpen, onClose]);
+
+    useEffect(() => {
+      console.log("2. Transação recebida no Modal:", editingTransaction);
+      if (editingTransaction) {
+        setFormData({
+          supplier: editingTransaction.fornecedor || "",
+          category: editingTransaction.categoria || "",
+          amount: editingTransaction.valor || "",
+          dueDate: editingTransaction.vencimento || "",
+          status: editingTransaction.status || "Pendente",
+          installments: editingTransaction.total_installment || 1,
+        });
+      } else {
+        setFormData({
+          supplier: "",
+          category: "",
+          amount: "",
+          dueDate: "",
+          status: "Pendente",
+          installments: 1,
+        });
+      }
+    }, [editingTransaction, isOpen]);
 
     if(!isOpen) return null;
 
@@ -118,7 +141,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           <div className="flex items-start justify-between border-b border-gray-100 pb-4">
             <div>
               <h2 className="text-xl font-bold text-slate-800">
-                Novo Lançamento
+                {editingTransaction ? "Editar Lançamento" : "Nova Transação"}
               </h2>
               <p className="text-sm text-slate-500">
                 Preencha os dados abaixo para cadastrar uma nova fatura

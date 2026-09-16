@@ -119,10 +119,8 @@ export default function App() {
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
   const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
   const [pageTransactions, setPageTransactions] = useState([]);
-
   const filteredTransactions = accountTransactions.filter((transaction) => {
     if (!transaction) return false;
 

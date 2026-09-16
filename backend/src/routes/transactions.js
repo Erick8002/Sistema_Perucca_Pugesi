@@ -1,8 +1,9 @@
 const express = require("express");
 const pool = require("../db");
 const router = express.Router();
-const crypto = require('crypto');
+const crypto = require("crypto");
 
+// 1. GET / - Ajustado os parâmetros para (req, res)
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -25,13 +26,14 @@ router.get("/", async (req, res) => {
             ORDER BY t.due_date DESC;
         `);
 
-    res.json(result.rows);
+    return res.json(result.rows);
   } catch (error) {
     console.error("Erro ao buscar contas: ", error.message);
-    res.status(500).json({ error: "Erro ao buscar transações" });
+    return res.status(500).json({ error: "Erro ao buscar transações" });
   }
 });
 
+// 2. POST / - Criação de transações e parcelas
 router.post("/", async (req, res) => {
   const {
     account_id,
@@ -45,11 +47,8 @@ router.post("/", async (req, res) => {
 
   try {
     const groupId = crypto.randomUUID();
-  
     const total = parseInt(total_installment, 10) || 1;
-
     const installmentValue = Number(amount) / total;
-
     const createdTransactions = [];
 
     for (let i = 1; i <= total; i++) {
@@ -72,20 +71,63 @@ router.post("/", async (req, res) => {
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             RETURNING *
           `,
-        [account_id, baseDate, supplier, category, installmentValue, status, i, total, groupId],
+        [
+          account_id,
+          baseDate,
+          supplier,
+          category,
+          installmentValue,
+          status,
+          i,
+          total,
+          groupId,
+        ]
       );
 
       createdTransactions.push(result.rows[0]);
     }
-    console.log("GROUP ID GERADO:", groupId)
 
     return res.status(201).json(createdTransactions);
   } catch (error) {
     console.error("Erro ao criar transação: ", error.message);
-    res.status(500).json({ error: "Erro interno do servidor" });
+    return res.status(500).json({ error: "Erro interno do servidor" });
   }
 });
 
+// 3. PUT /group/:groupId - Atualização por Grupo (Declarada ANTES de /:id)
+router.put("/group/:groupId", async (req, res) => {
+  const { groupId } = req.params;
+  const { supplier, category } = req.body;
+
+  try {
+    const result = await pool.query(
+      `
+        UPDATE transactions
+        SET
+          supplier = $1,
+          category = $2
+        WHERE group_id = $3
+        RETURNING *;
+        `,
+      [supplier, category, groupId]
+    );
+
+    if (result.rows.length === 0) {
+      return res
+        .status(404)
+        .json({ error: "Nenhuma transação encontrada para esse grupo." });
+    }
+
+    return res.json(result.rows);
+  } catch (error) {
+    console.error("Erro ao atualizar grupo de transações: ", error.message);
+    return res
+      .status(500)
+      .json({ error: "Erro interno ao atualizar o grupo." });
+  }
+});
+
+// 4. Rotas por ID (/ :id) - PATCH, DELETE e PUT
 router
   .route("/:id")
   .patch(async (req, res) => {
@@ -95,7 +137,7 @@ router
     try {
       const result = await pool.query(
         "UPDATE transactions SET status = $1 WHERE id = $2 RETURNING *",
-        [status, id],
+        [status, id]
       );
 
       if (result.rowCount === 0) {
@@ -119,21 +161,53 @@ router
       const { id } = req.params;
 
       const result = await pool.query(
-        `DELETE FROM transactions where id = $1 RETURNING id`,
-        [id],
+        `DELETE FROM transactions WHERE id = $1 RETURNING id`,
+        [id]
       );
 
       if (result.rowCount === 0) {
         return res.status(404).json({ error: "Transação não encontrada" });
       }
 
-      res.json({
+      return res.json({
         message: "Transação excluída com sucesso",
         id: result.rows[0].id,
       });
     } catch (error) {
       console.error("Erro ao excluir transação: ", error.message);
-      res.status(500).json({ error: "Erro ao excluir transação" });
+      return res.status(500).json({ error: "Erro ao excluir transação" });
+    }
+  })
+  .put(async (req, res) => {
+    const { id } = req.params;
+    const { due_date, supplier, category, amount, status } = req.body;
+
+    try {
+      const result = await pool.query(
+        `
+        UPDATE transactions
+        SET 
+          due_date = $1,
+          supplier = $2,
+          category = $3,
+          amount = $4,
+          status = $5
+        WHERE id = $6
+        RETURNING *;
+        `, // 👈 Removida a vírgula antes do WHERE
+        [due_date, supplier, category, amount, status, id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Transação não encontrada" });
+      }
+
+      return res.json(result.rows[0]);
+    } catch (error) {
+      console.error("Erro no PUT individual: ", error.message);
+      return res
+        .status(500)
+        .json({ error: "Erro interno ao atualizar transação" });
     }
   });
 
