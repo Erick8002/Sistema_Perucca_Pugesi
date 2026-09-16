@@ -343,6 +343,7 @@ export default function TransactionsTable({
         onClose={handleCloseDrawer}
         getTransactionStatus={getTransactionStatus}
         getInstallmentProgress={getInstallmentProgress}
+        transactions={transactions}
       />
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4 sm:p-6 space-y-6 space-y-reverse">

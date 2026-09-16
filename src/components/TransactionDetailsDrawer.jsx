@@ -16,6 +16,7 @@ export function TransactionDetailsDrawer({
   onClose,
   getTransactionStatus,
   getInstallmentProgress,
+  transactions = []
 }) {
   if (!transaction) return null;
 
@@ -145,10 +146,10 @@ export function TransactionDetailsDrawer({
               <div>
                 <p className="text-xs text-slate-400">Parcelamento</p>
                 <p className="text-sm font-semibold text-slate-800">
-                  {getInstallmentProgress(transaction)} parcelas pagas
+                  {getInstallmentProgress(transaction, transactions)} parcelas pagas
                   <span className="text-xs font-normal text-slate-500 ml-1.5">
-                    (Parcela {transaction.current_installment || 1} de{" "}
-                    {transaction.total_installment || 1})
+                    (Parcela {transaction?.current_installment || 1} de {" "}
+                    {transaction?.total_installment || 1})
                   </span>
                 </p>
               </div>
