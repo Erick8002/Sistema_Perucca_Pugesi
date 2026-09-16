@@ -35,6 +35,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       valor: '',
       status: '',
       installment: '1',
+      group_id: '',
       file: null
     };
     const [formData, setFormData] = useState(initialFormState);
@@ -97,7 +98,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           categoria: categoria,
           valor: parsedValue,
           status: status === 'Selecione' || !status ? "Pendente" : status,
-          installment: formData.installment || '1'
+          installment: formData.installment || '1',
+          group_id: formData.group_id
         });
         resetForm();
         onClose();
@@ -131,7 +133,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           </div>
 
           {/* Formulário */}
-          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4" autoComplete='off'>
             {/* Fornecedor / Empresa */}
             <div>
               <label className="block text-sm font-semibold text-slate-700">

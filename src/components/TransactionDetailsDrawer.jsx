@@ -148,7 +148,7 @@ export function TransactionDetailsDrawer({
                   {getInstallmentProgress(transaction)} parcelas pagas
                   <span className="text-xs font-normal text-slate-500 ml-1.5">
                     (Parcela {transaction.current_installment || 1} de{" "}
-                    {transaction.total_installments || 1})
+                    {transaction.total_installment || 1})
                   </span>
                 </p>
               </div>

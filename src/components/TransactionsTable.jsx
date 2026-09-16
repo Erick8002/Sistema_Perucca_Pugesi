@@ -6,26 +6,6 @@ import { NewTransactionModal } from "./NewTransactionModal";
 import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
 import { Search, FileText, Plus, BetweenHorizonalEnd } from "lucide-react";
 
-const getInstallmentProgress = (transaction) => {
-  if (!transaction) return "0/1";
-
-  const total_installment =
-    transaction.total_installment || transaction.total_parcelas || 1;
-  const current_installment =
-    transaction.current_installment || transaction.parcela_atual || 1;
-  const status = transaction.status;
-
-  let paidCount = 0;
-
-  if (status === "Pago") {
-    paidCount = current_installment;
-  } else {
-    paidCount = Math.max(0, current_installment - 1);
-  }
-
-  return `${paidCount}/${total_installment}`;
-};
-
 export default function TransactionsTable({
   filterTransactions,
   transactions,
@@ -89,7 +69,7 @@ export default function TransactionsTable({
           supplier: newTransaction.fornecedor,
           category: newTransaction.categoria,
           amount: newTransaction.valor,
-          status: newTransaction.status,
+          status: newTransaction.status
         }),
       });
 
@@ -107,6 +87,7 @@ export default function TransactionsTable({
         status: item.status,
         current_installment: item.current_installment,
         total_installment: item.total_installment,
+        group_id: item.group_id
       }));
 
       setTransactions((prev) => [...formatedTransaction, ...prev]);
@@ -198,6 +179,38 @@ export default function TransactionsTable({
     setIsDrawerOpen(false);
   };
 
+  const getInstallmentProgress = (transaction, allTransactions = []) => {
+    if (!transaction) return "0/1";
+
+    const total = transaction.total_installment || 1;
+    const current = transaction.current_installment || 1;
+
+    // Se é uma transação simples (1 parcela), retorna 1/1 ou 0/1 baseado no status
+    if (total === 1) {
+      return transaction.status === "Pago" ? "1/1" : "0/1";
+    }
+
+    if (transaction.group_id) {
+      const sameGroupTransactions = allTransactions.filter((t) => t.group_id === transaction.group_id);
+
+      // Conta quantas parcelas com número <= ao atual estão realmente marked como "Pago", e Math.min para não ultrapassar o total de parcelas.
+      const paidCount = Math.min((sameGroupTransactions.filter((t) => t.status === "Pago").length), total);
+      
+      return `${paidCount}/${total}`;
+    }
+
+    //Fallback para transações antigas que não possuem group_id registrado
+    const sameGroupFallBack = allTransactions.filter(
+      (t) =>
+        t.fornecedor === transaction.fornecedor &&
+        t.total_installment === total
+    );
+
+    const paidCountFallback = Math.min((sameGroupFallBack.filter((t) => t.status === "Pago").length), total);
+
+    return `${paidCountFallback}/${total}`;
+  };
+
   useEffect(() => {
     const activeDate = startDate || endDate;
     const activeStartDateMonth = startDate ? startDate.split("-")[1] : false;
@@ -231,11 +244,11 @@ export default function TransactionsTable({
 
     return [
       item.fornecedor,
-      item.fatura,
       item.categoria,
       item.vencimento,
       item.valor,
       item.status,
+      item.total_installment,
     ].some((value) =>
       String(value ?? "")
         .toLocaleLowerCase()
@@ -265,12 +278,6 @@ export default function TransactionsTable({
     if (!a?.vencimento || !b?.vencimento) return 0;
     return a.vencimento.localeCompare(b.vencimento);
   });
-
-  const STATUS_STYLES = {
-    Pago: "bg-emerald-100 text-emerald-700",
-    Pendente: "bg-amber-100 text-amber-700",
-    Atrasado: "bg-rose-100 text-rose-700",
-  };
 
   const getTransactionStatus = (item) => {
     if (!item) return "Pendente";
@@ -404,13 +411,14 @@ export default function TransactionsTable({
               />
             </div>
 
-            {(startDate || endDate || monthTableFilter !== monthOptions[0]) && (
+            {(startDate || endDate || monthTableFilter !== monthOptions[0] || searchTerm) && (
               <button
                 type="button"
                 onClick={() => {
                   setStartDate("");
                   setEndDate("");
                   setMonthTableFilter(monthOptions[0]);
+                  setSearchTerm("");
                 }}
                 className="text-xs font-medium text-gray-500 hover:text-purple-600 transition-colors underline cursor-pointer"
               >
@@ -481,9 +489,14 @@ export default function TransactionsTable({
                         R$ {formatCurrency(item.valor)}
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <div className="flex items-center">
+                        <div 
+                          onClick={(e) => {
+                            e.stopPropagation()
+                          }}
+                          className="flex items-center"
+                          >
                           <span className="bg-slate-100 text-slate-600 text-[11px] font-semibold px-2 py-0.5 rounded-md border border-slate-200 whitespace-nowrap">
-                            {getInstallmentProgress(item)}
+                            {getInstallmentProgress(item, transactions)}
                           </span>
                         </div>
                       </td>

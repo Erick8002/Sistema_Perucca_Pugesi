@@ -1,6 +1,7 @@
 const express = require("express");
 const pool = require("../db");
 const router = express.Router();
+const crypto = require('crypto');
 
 router.get("/", async (req, res) => {
   try {
@@ -12,12 +13,16 @@ router.get("/", async (req, res) => {
                 t.due_date AS data_vencimento,
                 t.supplier AS fornecedor,
                 t.category AS categoria,
+                t.total_installment AS total_installment,
+                t.current_installment AS current_installment,
                 t.amount AS valor,
-                t.status
+                t.status,
+                t.created_at,
+                t.group_id
             FROM accounts a
             JOIN transactions t
             ON t.account_id = a.id
-            ORDER BY t.due_date;
+            ORDER BY t.due_date DESC;
         `);
 
     res.json(result.rows);
@@ -28,19 +33,20 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/", async (req, res) => {
-  try {
-    const {
-      account_id,
-      due_date,
-      supplier,
-      category,
-      amount,
-      total_installment,
-      status,
-    } = req.body;
+  const {
+    account_id,
+    due_date,
+    supplier,
+    category,
+    amount,
+    status,
+    total_installment,
+  } = req.body;
 
+  try {
+    const groupId = crypto.randomUUID();
+  
     const total = parseInt(total_installment, 10) || 1;
-    console.log("Total de parcelas recebido no Backend: ", total);
 
     const installmentValue = Number(amount) / total;
 
@@ -55,30 +61,23 @@ router.post("/", async (req, res) => {
             INSERT INTO transactions (
                 account_id,
                 due_date,
-                current_installment,
-                total_installment,
-                supplier,
-                category,
-                amount,
-                status
-            )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-            RETURNING
-                id,
-                account_id,
-                due_date,
                 supplier,
                 category,
                 amount,
                 status,
                 current_installment,
-                total_installment;
-                `,
-        [account_id, baseDate, i, total, supplier, category, installmentValue, status],
+                total_installment,
+                group_id
+                )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING *
+          `,
+        [account_id, baseDate, supplier, category, installmentValue, status, i, total, groupId],
       );
 
       createdTransactions.push(result.rows[0]);
     }
+    console.log("GROUP ID GERADO:", groupId)
 
     return res.status(201).json(createdTransactions);
   } catch (error) {

@@ -23,49 +23,6 @@ const monthOptions = [
   "Dezembro",
 ];
 
-const initialTransactions = [
-  {
-    id: 1,
-    vencimento: "2026-09-08",
-    fornecedor: "Agrofértil Insumos",
-    categoria: "Fertilizantes",
-    valor: "4.500,00",
-    status: "Pago",
-  },
-  {
-    id: 2,
-    vencimento: "2026-09-10",
-    fornecedor: "MaqCampo Peças e Manutenção",
-    categoria: "Defensivos",
-    valor: "1.580,00",
-    status: "Pendente",
-  },
-  {
-    id: 3,
-    vencimento: "2026-09-17",
-    fornecedor: "Sementes AgroTech",
-    categoria: "Sementes",
-    valor: "2.300,00",
-    status: "Pendente",
-  },
-  {
-    id: 4,
-    vencimento: "2026-07-17",
-    fornecedor: "Fertilizantes AgroTech",
-    categoria: "Fertilizantes",
-    valor: "2.000,00",
-    status: "Pago",
-  },
-  {
-    id: 5,
-    vencimento: "2026-09-30",
-    fornecedor: "Agrohara",
-    categoria: "Sementes",
-    valor: "3.250,00",
-    status: "Pendente",
-  },
-];
-
 const parseCurrency = (valueString) => {
   if (!valueString) return 0;
   const normalizedValue = String(valueString)
@@ -142,6 +99,9 @@ export default function App() {
           categoria: t.categoria,
           valor: t.valor,
           status: t.status,
+          current_installment: t.current_installment,
+          total_installment: t.total_installment,
+          group_id: t.group_id
         }));
 
         setTransactions(formattedTransactions);
