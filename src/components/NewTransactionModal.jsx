@@ -24,7 +24,6 @@ const parseCurrencyInput = (value) => {
 };
 
 export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction }) {
-    if(!isOpen) return null;
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -126,7 +125,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         resetForm();
         onClose();
     };
-
+    
+    if(!isOpen) return null;
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
         {/* Container do Modal */}
