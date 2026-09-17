@@ -101,9 +101,13 @@ export default function App() {
           status: t.status,
           current_installment: t.current_installment,
           total_installment: t.total_installment,
-          group_id: t.group_id
+          group_id: t.group_id,
+          nfe_url: t.nfe_url,
+          xml_url: t.xml_url,
+          boleto_url: t.boleto_url,
+          receipt_url: t.receipt_url,
         }));
-
+        console.log("Transações formatadas: ", formattedTransactions)
         setTransactions(formattedTransactions);
       } catch (error) {
         console.error("Erro ao carregar transações: ", error.message);
@@ -209,7 +213,7 @@ export default function App() {
 
           <TransactionsTable
             filterTransactions={filteredTransactions}
-            transactions={transactions}
+            transactions={accountTransactions}
             setTransactions={setTransactions}
             categoryTableHeader={categoryTableHeader}
             setCategoryTableHeader={setCategoryTableHeader}

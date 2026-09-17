@@ -4,7 +4,7 @@ import { DateInput } from "./DateInput";
 import { ActionMenu } from "./ActionMenu";
 import { NewTransactionModal } from "./NewTransactionModal";
 import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
-import { Search, FileText, Plus, BetweenHorizonalEnd } from "lucide-react";
+import { Search, FileText, Plus, BetweenHorizonalEnd, FileCode, Barcode, Receipt } from "lucide-react";
 
 export default function TransactionsTable({
   filterTransactions,
@@ -489,12 +489,13 @@ export default function TransactionsTable({
             <thead>
               <tr className="border-b border-gray-100 text-gray-400 font-medium">
                 <th className="pb-3 pl-4 w-[15%] font-medium">Vencimento</th>
-                <th className="pb-3 w-[25%] font-medium">Fornecedor</th>
-                <th className="pb-3 w-[20%] font-medium">Categoria</th>
-                <th className="pb-3 w-[15%] font-medium">Valor</th>
-                <th className="pb-3 pl-2 w-[10%] font-medium">Parcelas</th>
+                <th className="pb-3 w-[30%] font-medium">Fornecedor</th>
+                <th className="pb-3 w-[10%] font-medium">Categoria</th>
+                <th className="pb-3 w-[10%] font-medium">Valor</th>
+                <th className="pb-3 pl-2 w-[8%] font-medium">Parcelas</th>
                 <th className="pb-3 w-[8%] font-medium text-center">Pago</th>
-                <th className="pb-3 w-[7%] font-medium text-right pr-3">Ações</th>
+                <th className="pb-3 w-[7%] font-medium text-center"></th>
+                <th className="pb-3 w-[6%] font-medium text-right pr-3">Ações</th>
               </tr>
             </thead>
             <tbody className=" divide-y divide-gray-50 text-gray-700">
@@ -516,7 +517,7 @@ export default function TransactionsTable({
                       key={item.id}
                       onClick={() => handleRowClick(item)}
                       className={`
-                      cursor-pointer hover:bg-gray-50/50 
+                      group cursor-pointer hover:bg-gray-50/50 
                       ${
                         isOverdue
                           ? "bg-rose-100/80 hover:bg-rose-100/60 border-rose-100"
@@ -601,6 +602,77 @@ export default function TransactionsTable({
                             </svg>
                           </div>
                         </button>
+                      </td>
+                      <td className="py-4 px-2">
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-center gap-1.5 justify-center flex-wrap">
+                          
+                          {/* NF-e */}
+                          
+                            {item.nfe_url && (<a 
+                              href={item.nfe_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              title="Nota Fiscal (NF-e)"
+                              className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <FileText className="w-4 h-4" /> {/* Ícone Lucide-react */}
+                            </a>
+                          )}
+                          
+
+                          {/* XML */}
+                          
+                            {item.xml_url && (<a 
+                              href={item.xml_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              title="Arquivo XML"
+                              className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <FileCode className="w-4 h-4" />
+                            </a>
+                          )}
+                          
+
+                          {/* Boleto */}
+                          
+                            {item.boleto_url && (<a 
+                              href={item.boleto_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              title="Boleto"
+                              className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <Barcode className="w-4 h-4" />
+                            </a>
+                          )}
+
+                          {/* Comprovante */}
+                        
+                            {item.receipt_url && (<a 
+                              href={item.receipt_url} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              title="Comprovante de Pagamento"
+                              className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                              }}
+                            >
+                              <Receipt className="w-4 h-4" />
+                            </a>
+                          )}
+
+                        </div>
                       </td>
                       <td className="py-3 text-right pr-2">
                         <div

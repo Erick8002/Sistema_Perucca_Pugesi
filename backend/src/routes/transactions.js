@@ -3,7 +3,7 @@ const pool = require("../db");
 const router = express.Router();
 const crypto = require("crypto");
 
-// 1. GET / - Ajustado os parâmetros para (req, res)
+// 1. GET / 
 router.get("/", async (req, res) => {
   try {
     const result = await pool.query(`
@@ -19,7 +19,11 @@ router.get("/", async (req, res) => {
                 t.amount AS valor,
                 t.status,
                 t.created_at,
-                t.group_id
+                t.group_id,
+                t.nfe_url,
+                t.xml_url,
+                t.boleto_url,
+                t.receipt_url
             FROM accounts a
             JOIN transactions t
             ON t.account_id = a.id
@@ -43,6 +47,10 @@ router.post("/", async (req, res) => {
     amount,
     status,
     total_installment,
+    nfe_url = null,
+    xml_url = null,
+    boleto_url = null,
+    receipt_url = null
   } = req.body;
 
   try {
@@ -66,9 +74,13 @@ router.post("/", async (req, res) => {
                 status,
                 current_installment,
                 total_installment,
-                group_id
+                group_id,
+                nfe_url,
+                xml_url,
+                boleto_url,
+                receipt_url,
                 )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
           `,
         [
@@ -81,6 +93,10 @@ router.post("/", async (req, res) => {
           i,
           total,
           groupId,
+          nfe_url,
+          xml_url,
+          boleto_url,
+          receipt_url
         ]
       );
 
@@ -193,7 +209,7 @@ router
           status = $5
         WHERE id = $6
         RETURNING *;
-        `, // 👈 Removida a vírgula antes do WHERE
+        `, 
         [due_date, supplier, category, amount, status, id]
       );
 

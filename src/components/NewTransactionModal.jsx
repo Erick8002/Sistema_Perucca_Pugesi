@@ -125,7 +125,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         resetForm();
         onClose();
     };
-    
+
     if(!isOpen) return null;
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
@@ -268,12 +268,13 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
             {/* Área de Upload de Comprovante */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1">
-                Comprovante/ Boleto (Opcional)
+                Arquivos (Opcional)
               </label>
               <div className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/30 p-6 text-center hover:bg-slate-50 transition-colors">
                 <input
                   type="file"
-                  accept=".pdf,.png,.jpg,.jpeg"
+                  multiple
+                  accept=".pdf,.png,.jpg,.jpeg,.xml"
                   onChange={handleFileChange}
                   className="absolute inset-0 cursor-pointer opacity-0"
                 />
