@@ -120,9 +120,7 @@ export function TransactionDetailsDrawer({
                 <p className="text-xs text-slate-400">Data de Vencimento</p>
                 <p className="text-sm font-semibold text-slate-800">
                   {transaction.vencimento
-                    ? new Date(transaction.vencimento).toLocaleDateString(
-                        "pt-BR",
-                      )
+                    ? transaction.vencimento.split("-").reverse().join("/")
                     : "N/A"}
                 </p>
               </div>

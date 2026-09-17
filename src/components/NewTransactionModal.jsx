@@ -23,7 +23,8 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction }) {
+    if(!isOpen) return null;
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -42,6 +43,18 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [categoria, setCategoria] = useState('Selecione');
     const [status, setStatus] = useState('Selecione');
     const [installment, setInstallment] = useState("1");
+    const resetForm = () => {
+      setFormData(initialFormState);
+      setCategoria('Selecione');
+      setStatus('Selecione');
+      setInstallment("1");
+      setEditingTransaction(null);
+    };
+    function handleClose() {
+      resetForm();
+      setEditingTransaction(null);
+      onClose();
+    }
 
     useEffect(() => {
       function handleClickOutside(event) {
@@ -59,36 +72,22 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     }, [isOpen, onClose]);
 
     useEffect(() => {
+      if(!isOpen) return;
       console.log("2. Transação recebida no Modal:", editingTransaction);
-      if (editingTransaction) {
+      if (isEditing) {
         setFormData({
-          supplier: editingTransaction.fornecedor || "",
-          category: editingTransaction.categoria || "",
-          amount: editingTransaction.valor || "",
-          dueDate: editingTransaction.vencimento || "",
+          fornecedor: editingTransaction.fornecedor || "",
+          valor: editingTransaction.valor || "",
+          vencimento: editingTransaction.vencimento || "",
           status: editingTransaction.status || "Pendente",
-          installments: editingTransaction.total_installment || 1,
+          installment: editingTransaction.total_installment || 1,
         });
+        setCategoria(editingTransaction.categoria);
+        setStatus(editingTransaction.status);
       } else {
-        setFormData({
-          supplier: "",
-          category: "",
-          amount: "",
-          dueDate: "",
-          status: "Pendente",
-          installments: 1,
-        });
+        resetForm();
       }
-    }, [editingTransaction, isOpen]);
-
-    if(!isOpen) return null;
-
-    const resetForm = () => {
-      setFormData(initialFormState);
-      setCategoria('Selecione');
-      setStatus('Selecione');
-      setInstallment("1");
-    };
+    }, [editingTransaction, isOpen, isEditing]);
 
     const handleChange = (e) => {
         const { name, value } = e.target;
@@ -128,11 +127,6 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         onClose();
     };
 
-    const handleClose = () => {
-      resetForm();
-      onClose();
-    }
-
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
         {/* Container do Modal */}
@@ -141,7 +135,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           <div className="flex items-start justify-between border-b border-gray-100 pb-4">
             <div>
               <h2 className="text-xl font-bold text-slate-800">
-                {editingTransaction ? "Editar Lançamento" : "Nova Transação"}
+                {isEditing ? "Editar Lançamento" : "Nova Transação"}
               </h2>
               <p className="text-sm text-slate-500">
                 Preencha os dados abaixo para cadastrar uma nova fatura
@@ -219,8 +213,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 </label>
                 <input
                   type="date"
-                  name="dueDate"
-                  value={formData.dueDate || ""}
+                  name="vencimento"
+                  value={formData.vencimento || ""}
                   onChange={handleChange}
                   className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-600 focus:border-purple-500 focus:bg-white focus:outline-none"
                 />
@@ -309,7 +303,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 type="submit"
                 className="rounded-lg bg-[#3b233a] px-5 py-2.5 text-sm font-medium text-white hover:bg-[#2b192b] transition-colors"
               >
-                Salvar Lançamento
+                {isEditing ? "Salvar Edição" : "Salvar Lançamento"}
               </button>
             </div>
           </form>

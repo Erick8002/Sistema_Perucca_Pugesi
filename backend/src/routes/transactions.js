@@ -94,7 +94,6 @@ router.post("/", async (req, res) => {
   }
 });
 
-// 3. PUT /group/:groupId - Atualização por Grupo (Declarada ANTES de /:id)
 router.put("/group/:groupId", async (req, res) => {
   const { groupId } = req.params;
   const { supplier, category } = req.body;

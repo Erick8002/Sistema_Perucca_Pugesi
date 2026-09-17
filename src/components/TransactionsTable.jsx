@@ -34,16 +34,17 @@ export default function TransactionsTable({
 
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
+  const isEditing = Boolean(editingTransaction?.id);
   const handleSaveTransaction = async (newTransaction) => {
     if (!selectedAccount) {
       alert("Selecione uma conta antes de criar uma transação.");
       return;
     }
 
-    const isEditing = Boolean(editingTransaction?.id);
+    console.log("isEditing: " ,isEditing)
     const url = isEditing
       ? `http://localhost:3001/api/transactions/${editingTransaction.id}`
-      : "http://localhost:3001/api/transactions";
+      : "http://localhost:3001/api/transactions/";
 
     const method = isEditing ? "PUT" : "POST";
     const rawDate = newTransaction.vencimento || newTransaction.dueDate;
@@ -437,6 +438,8 @@ export default function TransactionsTable({
               categoryOptions={categoryOptions}
               statusOptions={statusOptions}
               editingTransaction={editingTransaction}
+              isEditing={isEditing}
+              setEditingTransaction={setEditingTransaction}
             />
           </div>
         </div>
