@@ -42,19 +42,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [categoria, setCategoria] = useState('Selecione');
     const [status, setStatus] = useState('Selecione');
     const [installment, setInstallment] = useState("1");
-    const resetForm = () => {
-      setFormData(initialFormState);
-      setCategoria('Selecione');
-      setStatus('Selecione');
-      setInstallment("1");
-      setEditingTransaction(null);
-    };
-    function handleClose() {
-      resetForm();
-      setEditingTransaction(null);
-      onClose();
-    }
-
+    const [attachedFiles, setAttachedFiles] = useState([]);
+    
     useEffect(() => {
       function handleClickOutside(event) {
         if (selectRef.current && !selectRef.current.contains(event.target)) {
@@ -69,7 +58,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }, [isOpen, onClose]);
-
+    
     useEffect(() => {
       if(!isOpen) return;
       console.log("2. Transação recebida no Modal:", editingTransaction);
@@ -88,15 +77,62 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       }
     }, [editingTransaction, isOpen, isEditing]);
 
+    const resetForm = () => {
+      setFormData(initialFormState);
+      setCategoria('Selecione');
+      setStatus('Selecione');
+      setInstallment("1");
+      setEditingTransaction(null);
+      setAttachedFiles([]);
+    };
+    function handleClose() {
+      resetForm();
+      onClose();
+    }
+    
     const handleChange = (e) => {
         const { name, value } = e.target;
         setFormData((prev) => ({ ...prev, [name]: value}))
     };
 
-    const handleFileChange = (e) => {
-        if(e.target.files && e.target.files[0]){
-            setFormData((prev) => ({ ...prev, file: e.target.files[0] }));
+    const handleTypeChange = (id, newType) => {
+      setAttachedFiles((prev) =>
+        prev.map((item) => (item.id === id ? { ...item, type: newType } : item))
+      );
+    };
+
+    const handleRemoveFile = (id) => {
+      setAttachedFiles((prev) => prev.filter((item) => item.id !== id));
+    };
+
+    const handleFileSelect = (e) => {
+      const filesList = e.target.files || e.dataTransfer?.files;
+      if (!filesList) return;
+
+      const files = Array.from(filesList);
+
+      const newFiles = files.map((file) => {
+        const ext = file.name.split('.').pop().toLowerCase();
+        const fileNameLower = file.name.toLowerCase();
+
+        // Sugestão automática de tipo
+        let defaultType = 'boleto_url';
+        if (ext === 'xml') {
+          defaultType = 'xml_url';
+        } else if (fileNameLower.includes('nfe') || fileNameLower.includes('nota')) {
+          defaultType = 'nfe_url';
+        } else if (fileNameLower.includes('comprovante') || fileNameLower.includes('recibo')) {
+          defaultType = 'receipt_url';
         }
+
+        return {
+          id: Math.random().toString(36).substr(2, 9),
+          file: file,
+          type: defaultType
+        };
+      });
+
+      setAttachedFiles((prev) => [...prev, ...newFiles]);
     };
     
     const handleSubmit = (e) => {
@@ -273,9 +309,10 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
               <div className="relative flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-slate-200 bg-slate-50/30 p-6 text-center hover:bg-slate-50 transition-colors">
                 <input
                   type="file"
+                  id="file-upload"
                   multiple
                   accept=".pdf,.png,.jpg,.jpeg,.xml"
-                  onChange={handleFileChange}
+                  onChange={handleFileSelect}
                   className="absolute inset-0 cursor-pointer opacity-0"
                 />
                 <div className="rounded-full bg-slate-100 p-3 mb-2 text-slate-600">
@@ -290,6 +327,48 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 </p>
               </div>
             </div>
+            {attachedFiles.length > 0 && (
+              <div className="mt-4 space-y-2">
+                <label className="text-xs font-semibold text-gray-600 block">
+                  Arquivos Selecionados ({attachedFiles.length}):
+                </label>
+
+                {attachedFiles.map((item) => (
+                  <div 
+                    key={item.id} 
+                    className="flex items-center justify-between p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                  >
+                    {/* Nome do Arquivo */}
+                    <span className="truncate max-w-[200px] font-medium text-gray-700" title={item.file.name}>
+                      {item.file.name}
+                    </span>
+
+                    {/* Seleção de Tipo e Exclusão */}
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={item.type}
+                        onChange={(e) => handleTypeChange(item.id, e.target.value)}
+                        className="text-xs bg-white border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500 text-gray-700"
+                      >
+                        <option value="boleto_url">Boleto</option>
+                        <option value="nfe_url">Nota Fiscal (NF-e)</option>
+                        <option value="xml_url">XML</option>
+                        <option value="receipt_url">Comprovante</option>
+                      </select>
+
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFile(item.id)}
+                        className="text-gray-400 hover:text-red-500 p-1 font-bold text-xs"
+                        title="Remover arquivo"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             {/* Botões de Ação */}
             <div className="flex justify-end gap-3 pt-4">
