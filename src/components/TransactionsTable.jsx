@@ -72,6 +72,10 @@ export default function TransactionsTable({
         amount: Number(newTransaction.valor),
         status: newTransaction.status || "Pendente",
         ...(isEditing ? {} : { total_installment: totalInstallmentNum }),
+        nfe_url: newTransaction.nfe_url || null,
+        xml_url: newTransaction.xml_url || null,
+        boleto_url: newTransaction.boleto_url || null,
+        receipt_url: newTransaction.receipt_url || null
       }
       
     try {

@@ -39,12 +39,17 @@ router.get("/", async (req, res) => {
 
 // 2. POST / - Criação de transações e parcelas
 router.post("/", async (req, res) => {
+  console.log("REQ.BODY RECEBIDO NO BACKEND: ", req.body);
   const {
     account_id,
     due_date,
+    dataVencimento,
     supplier,
+    fornecedor,
     category,
+    categoria,
     amount,
+    valor,
     status,
     total_installment,
     nfe_url = null,
@@ -54,9 +59,18 @@ router.post("/", async (req, res) => {
   } = req.body;
 
   try {
+    const finalDueDate = due_date || dataVencimento;
+    const finalSupplier = supplier || fornecedor || null;
+    const finalCategory = category || categoria || null;
+    const finalAmount = Number(amount || valor || 0);
+
+    if(!finalDueDate) {
+      return res.status(400).json({ error: "A data de vencimento é obrigatória." });
+    }
+
     const groupId = crypto.randomUUID();
     const total = parseInt(total_installment, 10) || 1;
-    const installmentValue = Number(amount) / total;
+    const installmentValue = finalAmount / total;
     const createdTransactions = [];
 
     for (let i = 1; i <= total; i++) {
@@ -78,7 +92,7 @@ router.post("/", async (req, res) => {
                 nfe_url,
                 xml_url,
                 boleto_url,
-                receipt_url,
+                receipt_url
                 )
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             RETURNING *
@@ -86,10 +100,10 @@ router.post("/", async (req, res) => {
         [
           account_id,
           baseDate,
-          supplier,
-          category,
+          finalSupplier,
+          finalCategory,
           installmentValue,
-          status,
+          status || "Pendente",
           i,
           total,
           groupId,

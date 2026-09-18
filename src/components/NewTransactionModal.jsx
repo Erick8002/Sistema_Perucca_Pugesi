@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 import { X, Upload } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 const parseCurrencyInput = (value) => {
     const normalizedValue = String(value)
@@ -135,7 +136,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       setAttachedFiles((prev) => [...prev, ...newFiles]);
     };
     
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         if(!formData.fornecedor || !formData.valor || categoria === "Selecione") {
@@ -150,16 +151,80 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
             return;
         }
 
-        onSave({
+        try {
+          const typeToColumnMap = {
+            'NF-e': 'nfe_url',
+            'nfe': 'nfe_url',
+            'XML': 'xml_url',
+            'xml': 'xml_url',
+            'Boleto': 'boleto_url',
+            'boleto': 'boleto_url',
+            'Comprovante': 'receipt_url',
+            'receipt': 'receipt_url'
+          };
+
+          const uploadedUrls = {
+            nfe_url: null,
+            xml_url: null,
+            boleto_url: null,
+            receipt_url: null
+          };
+
+          if (attachedFiles && attachedFiles.length > 0) {
+            for (const item of attachedFiles) {
+              if (!item.file) continue;
+
+              // Nome único para evitar conflitos no bucket
+              const fileExt = item.file.name.split('.').pop();
+              const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+              const filePath = `documents/${fileName}`;
+
+              // Upload direto para o Supabase Storage
+              const { error: uploadError } = await supabase.storage
+                .from('transaction_attachments')
+                .upload(filePath, item.file);
+
+              if (uploadError) {
+                console.error(`Erro ao carregar o ficheiro (${item.type}):`, uploadError.message);
+                continue;
+              }
+
+              // Resgate da URL pública
+              const { data: publicUrlData } = supabase.storage
+                .from('transaction_attachments')
+                .getPublicUrl(filePath);
+
+              // Converte o tipo selecionado para a coluna correspondente
+              const targetColumn = typeToColumnMap[item.type] || item.type;
+
+              // Atribui a URL ao campo correspondente (ex: nfe_url, xml_url, etc.)
+              if (targetColumn && uploadedUrls.hasOwnProperty(targetColumn)) {
+                uploadedUrls[targetColumn] = publicUrlData.publicUrl;
+              }
+            }
+          }
+
+          console.log("URLS GERADAS", uploadedUrls);
+          
+
+        await onSave({
           ...formData,
+          ...uploadedUrls, // INCLUÍDO: Repassa as URLs salvas (nfe_url, xml_url, boleto_url, receipt_url) para o onSave
           categoria: categoria,
           valor: parsedValue,
           status: status === 'Selecione' || !status ? "Pendente" : status,
           installment: formData.installment || '1',
           group_id: formData.group_id
         });
+
+        if(typeof setAttachedFiles === 'function') setAttachedFiles([]);
         resetForm();
         onClose();
+
+      } catch (error) {
+        console.error('Erro ao processar o envio da transação: ', error);
+        alert('Ocorreu um erro ao salvar a transação com os anexos');
+      }
     };
 
     if(!isOpen) return null;
