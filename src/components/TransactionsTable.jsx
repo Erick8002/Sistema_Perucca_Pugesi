@@ -41,7 +41,7 @@ export default function TransactionsTable({
       return;
     }
 
-    console.log("isEditing: " ,isEditing)
+    console.log("isEditing: " ,isEditing);
     const url = isEditing
       ? `http://localhost:3001/api/transactions/${editingTransaction.id}`
       : "http://localhost:3001/api/transactions/";
@@ -54,15 +54,19 @@ export default function TransactionsTable({
       
       const totalInstallmentNum = parseInt(newTransaction.installment, 10) || 1;
 
-      console.log("Payload enviado para API:", {
-        account_id: selectedAccount.id,
-        due_date: validDate,
-        total_installment: totalInstallmentNum,
-        supplier: newTransaction.fornecedor,
-        category: newTransaction.categoria,
-        amount: newTransaction.valor,
-        status: newTransaction.status || "Pendente",
-      });
+      // console.log("Payload enviado para API:", {
+      //   account_id: selectedAccount.id,
+      //   due_date: validDate,
+      //   total_installment: totalInstallmentNum,
+      //   supplier: newTransaction.fornecedor,
+      //   category: newTransaction.categoria,
+      //   amount: newTransaction.valor,
+      //   status: newTransaction.status || "Pendente",  
+      //   nfe_url: newTransaction.nfe_url || null,
+      //   xml_url: newTransaction.xml_url || null,
+      //   boleto_url: newTransaction.boleto_url || null,
+      //   receipt_url: newTransaction.receipt_url || null
+      // });
 
       const payload = {
         account_id: selectedAccount.id,
@@ -77,6 +81,10 @@ export default function TransactionsTable({
         boleto_url: newTransaction.boleto_url || null,
         receipt_url: newTransaction.receipt_url || null
       }
+      console.log("Payload enviado para API: ", payload);
+      console.log("URL: ", url);
+      console.log("Método: ", method)
+      
       
     try {
       const response = await fetch(url, {
@@ -105,6 +113,10 @@ export default function TransactionsTable({
         current_installment: responseData.current_installment,
         total_installment: responseData.total_installment,
         group_id: responseData.group_id,
+        nfe_url: responseData.nfe_url,
+        boleto_url: responseData.boleto_url,
+        xml_url: responseData.xml_url,
+        receipt_url: responseData.receipt_url
       };
 
       setTransactions((prev) =>
@@ -124,6 +136,10 @@ export default function TransactionsTable({
           current_installment: item.current_installment,
           total_installment: item.total_installment,
           group_id: item.group_id,
+          nfe_url: item.nfe_url,
+          boleto_url: item.boleto_url,
+          xml_url: item.xml_url,
+          receipt_url: item.receipt_url
         }));
 
         // Adiciona as novas parcelas no topo da lista
@@ -438,7 +454,10 @@ export default function TransactionsTable({
             <NewTransactionModal
               isOpen={isModalOpen}
               onClose={() => setIsModalOpen(false)}
-              onSave={handleSaveTransaction}
+              onSave={async (data) => {
+                console.log("Dados recebidos no Pai para salvar: ", data);
+                await handleSaveTransaction(data);
+              }}
               categoryOptions={categoryOptions}
               statusOptions={statusOptions}
               editingTransaction={editingTransaction}

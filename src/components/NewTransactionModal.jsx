@@ -63,7 +63,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     useEffect(() => {
       if(!isOpen) return;
       console.log("2. Transação recebida no Modal:", editingTransaction);
-      if (isEditing) {
+      if (isEditing && editingTransaction) {
         setFormData({
           fornecedor: editingTransaction.fornecedor || "",
           valor: editingTransaction.valor || "",
@@ -71,10 +71,42 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           status: editingTransaction.status || "Pendente",
           installment: editingTransaction.total_installment || 1,
         });
+
         setCategoria(editingTransaction.categoria);
         setStatus(editingTransaction.status);
+
+        const columnToTypeMap = {
+          nfe_url: 'nfe_url',
+          xml_url: 'xml_url',
+          boleto_url: 'boleto_url',
+          receipt_url: 'receipt_url'
+        };
+
+        const existingFiles = [];
+
+        ['nfe_url', 'xml_url', 'boleto_url', 'receipt_url'].forEach((column) => {
+          if(editingTransaction[column]) {
+            const rawFileName = editingTransaction[column].split('/').pop();
+            const cleanName = rawFileName.includes('-')
+              ? rawFileName.split('-').slice(1).join('-')
+              : rawFileName;
+
+              existingFiles.push({
+                id: column,
+                name: decodeURIComponent(cleanName),
+                type: columnToTypeMap[column] || column,
+                url: editingTransaction[column],
+                isExisting: true
+              });
+          }
+        });
+
+        setAttachedFiles(existingFiles);
       } else {
         resetForm();
+        if(typeof setAttachedFiles === 'function') {
+          setAttachedFiles([]);
+        }
       }
     }, [editingTransaction, isOpen, isEditing]);
 
@@ -96,14 +128,22 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         setFormData((prev) => ({ ...prev, [name]: value}))
     };
 
-    const handleTypeChange = (id, newType) => {
-      setAttachedFiles((prev) =>
-        prev.map((item) => (item.id === id ? { ...item, type: newType } : item))
+    const handleFileTypeChange = (indexToUpdate, newType) => {
+      setAttachedFiles((prevFiles) =>
+        prevFiles.map((item, index) => {
+          if (index === indexToUpdate) {
+            return {
+              ...item,
+              type: newType // Garante que o tipo selecionado no <select> é gravado diretamente
+            };
+          }
+          return item;
+        })
       );
     };
 
-    const handleRemoveFile = (id) => {
-      setAttachedFiles((prev) => prev.filter((item) => item.id !== id));
+    const handleRemoveFile = (indexToRemove) => {
+      setAttachedFiles((prev) => prev.filter((_, index) => index !== indexToRemove));
     };
 
     const handleFileSelect = (e) => {
@@ -137,79 +177,90 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     };
     
     const handleSubmit = async (e) => {
-        e.preventDefault();
+      e.preventDefault();
 
-        if(!formData.fornecedor || !formData.valor || categoria === "Selecione") {
-            alert('Por favor, preencha os campos obrigatórios.');
-            return;
-        }
+      if (!formData.fornecedor || !formData.valor || categoria === "Selecione") {
+        alert('Por favor, preencha os campos obrigatórios.');
+        return;
+      }
 
-        const parsedValue = parseCurrencyInput(formData.valor);
+      const parsedValue = parseCurrencyInput(formData.valor);
 
-        if (parsedValue <= 0) {
-            alert('Informe um valor válido maior que zero.');
-            return;
-        }
+      if (parsedValue <= 0) {
+        alert('Informe um valor válido maior que zero.');
+        return;
+      }
 
-        try {
-          const typeToColumnMap = {
-            'NF-e': 'nfe_url',
-            'nfe': 'nfe_url',
-            'XML': 'xml_url',
-            'xml': 'xml_url',
-            'Boleto': 'boleto_url',
-            'boleto': 'boleto_url',
-            'Comprovante': 'receipt_url',
-            'receipt': 'receipt_url'
-          };
+      try {
+        // Objeto inicial zerado
+        const uploadedUrls = {
+          nfe_url: null,
+          xml_url: null,
+          boleto_url: null,
+          receipt_url: null,
+        };
 
-          const uploadedUrls = {
-            nfe_url: null,
-            xml_url: null,
-            boleto_url: null,
-            receipt_url: null
-          };
+        const typeToColumnMap = {
+          'NF-e': 'nfe_url',
+          'nfe': 'nfe_url',
+          'nfe_url': 'nfe_url',
+          'XML': 'xml_url',
+          'xml': 'xml_url',
+          'xml_url': 'xml_url',
+          'Boleto': 'boleto_url',
+          'boleto': 'boleto_url',
+          'boleto_url': 'boleto_url',
+          'Comprovante': 'receipt_url',
+          'comprovante': 'receipt_url',
+          'comprovante_url': 'receipt_url',
+          'receipt': 'receipt_url',
+          'receipt_url': 'receipt_url'
+        };
 
-          if (attachedFiles && attachedFiles.length > 0) {
-            for (const item of attachedFiles) {
-              if (!item.file) continue;
+        if (attachedFiles && attachedFiles.length > 0) {
+          for (const item of attachedFiles) {
+            if (!item) continue;
 
-              // Nome único para evitar conflitos no bucket
-              const fileExt = item.file.name.split('.').pop();
-              const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-              const filePath = `documents/${fileName}`;
+            // Identifica para qual coluna do banco esse arquivo deve ir com base no tipo atual
+            const targetColumn = typeToColumnMap[item.type] || item.type || typeToColumnMap[item.id];
 
-              // Upload direto para o Supabase Storage
-              const { error: uploadError } = await supabase.storage
-                .from('transaction_attachments')
-                .upload(filePath, item.file);
-
-              if (uploadError) {
-                console.error(`Erro ao carregar o ficheiro (${item.type}):`, uploadError.message);
-                continue;
+            // CASO 1: Arquivo JÁ EXISTE no Supabase
+            if (item.isExisting || !item.file) {
+              if (targetColumn && item.url) {
+                uploadedUrls[targetColumn] = item.url;
               }
+              continue;
+            }
 
-              // Resgate da URL pública
-              const { data: publicUrlData } = supabase.storage
-                .from('transaction_attachments')
-                .getPublicUrl(filePath);
+            // CASO 2: É um NOVO ARQUIVO -> faz upload no Supabase
+            const fileExt = item.file.name.split('.').pop();
+            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+            const filePath = `documents/${fileName}`;
 
-              // Converte o tipo selecionado para a coluna correspondente
-              const targetColumn = typeToColumnMap[item.type] || item.type;
+            const { error: uploadError } = await supabase.storage
+              .from('transaction_attachments')
+              .upload(filePath, item.file);
 
-              // Atribui a URL ao campo correspondente (ex: nfe_url, xml_url, etc.)
-              if (targetColumn && uploadedUrls.hasOwnProperty(targetColumn)) {
-                uploadedUrls[targetColumn] = publicUrlData.publicUrl;
-              }
+            if (uploadError) {
+              console.error(`Erro ao carregar o ficheiro (${item.type}):`, uploadError.message);
+              continue;
+            }
+
+            const { data: publicUrlData } = supabase.storage
+              .from('transaction_attachments')
+              .getPublicUrl(filePath);
+
+            if (targetColumn && uploadedUrls.hasOwnProperty(targetColumn)) {
+              uploadedUrls[targetColumn] = publicUrlData.publicUrl;
             }
           }
+        }
 
-          console.log("URLS GERADAS", uploadedUrls);
-          
+        console.log("URLS GERADAS E MAPEADAS:", uploadedUrls);
 
         await onSave({
           ...formData,
-          ...uploadedUrls, // INCLUÍDO: Repassa as URLs salvas (nfe_url, xml_url, boleto_url, receipt_url) para o onSave
+          ...uploadedUrls,
           categoria: categoria,
           valor: parsedValue,
           status: status === 'Selecione' || !status ? "Pendente" : status,
@@ -217,7 +268,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           group_id: formData.group_id
         });
 
-        if(typeof setAttachedFiles === 'function') setAttachedFiles([]);
+        if (typeof setAttachedFiles === 'function') setAttachedFiles([]);
         resetForm();
         onClose();
 
@@ -398,40 +449,57 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                   Arquivos Selecionados ({attachedFiles.length}):
                 </label>
 
-                {attachedFiles.map((item) => (
-                  <div 
-                    key={item.id} 
-                    className="flex items-center justify-between p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm"
-                  >
-                    {/* Nome do Arquivo */}
-                    <span className="truncate max-w-[200px] font-medium text-gray-700" title={item.file.name}>
-                      {item.file.name}
-                    </span>
+                {attachedFiles && attachedFiles.map((item, index) => {
+                  if(!item) return null;
 
-                    {/* Seleção de Tipo e Exclusão */}
-                    <div className="flex items-center gap-2">
-                      <select
-                        value={item.type}
-                        onChange={(e) => handleTypeChange(item.id, e.target.value)}
-                        className="text-xs bg-white border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500 text-gray-700"
-                      >
-                        <option value="boleto_url">Boleto</option>
-                        <option value="nfe_url">Nota Fiscal (NF-e)</option>
-                        <option value="xml_url">XML</option>
-                        <option value="receipt_url">Comprovante</option>
-                      </select>
+                  const fileName = item.name || item.file?.name || "Arquivo anexado";
+                  return (
+                    <div 
+                      key={item.id || index} 
+                      className="flex items-center justify-between p-2.5 bg-gray-50 border border-gray-200 rounded-lg text-sm"
+                    >
+                      {/* Exibe o link se já tiver URL, ou só o texto se for um novo upload */}
+                      {item.url ? (
+                        <a
+                          href={item.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="truncate max-w-[200px] font-medium text-blue-700 underline" 
+                          title={fileName}
+                        >
+                          {fileName}
+                        </a>
+                      ) : (
+                        <span className="truncate max-w-[200px] font-medium text-gray-700" title={fileName}>
+                          {fileName}
+                        </span>
+                      )}
 
-                      <button
-                        type="button"
-                        onClick={() => handleRemoveFile(item.id)}
-                        className="text-gray-400 hover:text-red-500 p-1 font-bold text-xs"
-                        title="Remover arquivo"
-                      >
-                        ✕
-                      </button>
+                      {/* Seleção de Tipo e Exclusão */}
+                      <div className="flex items-center gap-2">
+                        <select
+                          value={item.type || 'boleto_url'}
+                          onChange={(e) => handleFileTypeChange(index, e.target.value)}
+                          className="text-xs bg-white border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-1 focus:ring-purple-500 text-gray-700"
+                        >
+                          <option value="boleto_url">Boleto</option>
+                          <option value="nfe_url">Nota Fiscal (NF-e)</option>
+                          <option value="xml_url">XML</option>
+                          <option value="receipt_url">Comprovante</option>
+                        </select>
+
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFile(index)}
+                          className="text-gray-400 hover:text-red-500 p-1 font-bold text-xs"
+                          title="Remover arquivo"
+                        >
+                          ✕
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 

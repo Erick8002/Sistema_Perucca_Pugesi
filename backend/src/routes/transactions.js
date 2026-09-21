@@ -156,7 +156,7 @@ router.put("/group/:groupId", async (req, res) => {
   }
 });
 
-// 4. Rotas por ID (/ :id) - PATCH, DELETE e PUT
+// 4. Rotas por ID (/:id) - PATCH, DELETE e PUT
 router
   .route("/:id")
   .patch(async (req, res) => {
@@ -208,10 +208,37 @@ router
     }
   })
   .put(async (req, res) => {
+    console.log("BODY RECEBIDO NO BACKEND: ", req.body);
+    
     const { id } = req.params;
-    const { due_date, supplier, category, amount, status } = req.body;
+    const { 
+      due_date, 
+      dataVencimento, 
+      supplier, 
+      fornecedor, 
+      category, 
+      categoria, 
+      amount, 
+      valor, 
+      status,
+      nfe_url,
+      xml_url,
+      boleto_url,
+      receipt_url
+    } = req.body;
 
     try {
+      const finalDueDate = due_date || dataVencimento;
+      const finalSupplier = supplier || fornecedor;
+      const finalCategory = category || categoria;
+      const finalAmount = Number(amount || valor || 0);
+
+      // Garante a leitura direta do req.body enviando NULL explicitamente se vier null/undefined
+      const finalNfeUrl = nfe_url ?? null;
+      const finalXmlUrl = xml_url ?? null;
+      const finalBoletoUrl = boleto_url ?? null;
+      const finalReceiptUrl = receipt_url ?? null;
+
       const result = await pool.query(
         `
         UPDATE transactions
@@ -220,12 +247,29 @@ router
           supplier = $2,
           category = $3,
           amount = $4,
-          status = $5
-        WHERE id = $6
+          status = $5,
+          nfe_url = $6,
+          xml_url = $7,
+          boleto_url = $8, 
+          receipt_url = $9
+        WHERE id = $10
         RETURNING *;
         `, 
-        [due_date, supplier, category, amount, status, id]
+        [
+          finalDueDate, 
+          finalSupplier, 
+          finalCategory, 
+          finalAmount, 
+          status || "Pendente", 
+          finalNfeUrl, 
+          finalXmlUrl, 
+          finalBoletoUrl, 
+          finalReceiptUrl, 
+          parseInt(id, 10) // Conversão de segurança para INTEGER
+        ]
       );
+
+      console.log("RESULTADO DO BANCO (RETURNING):", result.rows[0]);
 
       if (result.rows.length === 0) {
         return res.status(404).json({ error: "Transação não encontrada" });
