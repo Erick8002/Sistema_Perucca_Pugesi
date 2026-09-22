@@ -6,6 +6,7 @@ import TransactionsTable from "./components/TransactionsTable";
 import RelatoryButtons from "./components/RelatoryButtons";
 import PastelCards from "./components/PastelCards";
 import ChartsSection from "./components/ChartsSection";
+import { data } from "autoprefixer";
 
 const monthOptions = [
   "Selecione o mês",
@@ -38,16 +39,20 @@ const parseCurrency = (valueString) => {
 export default function App() {
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
   const [accounts, setAccounts] = useState([]);
-  const [selectedAccount, setSelectedAccount] = useState(null);
+  const [selectedAccount, setSelectedAccount] = useState(() => {
+    const savedAccount = localStorage.getItem('@finance:selectedAccount');
+    return savedAccount ? JSON.parse(savedAccount) : null;
+  });
   const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]);
   const accountTransactions = transactions.filter(
     (transaction) => transaction.accountId === selectedAccount?.id,
   );
 
   const categoryOptions = [
     "Todas as Categorias",
-    ...new Set(transactions
-      .map((transaction) => transaction.categoria)
+    ...new Set(categories
+      .map((categories) => categories)
       .filter(Boolean)
     )
   ];
@@ -71,7 +76,26 @@ export default function App() {
 
         const accountData = await response.json();
         setAccounts(accountData);
-        setSelectedAccount(accountData[0] || null);
+
+        if (accountData.length > 0) {
+          // 1. Tenta buscar a conta salva no localStorage
+          const savedAccount = localStorage.getItem("@finance:selectedAccount");
+          
+          if (savedAccount) {
+            const parsedAccount = JSON.parse(savedAccount);
+            // 2. Procura a conta salva na lista vinda do banco (pelo ID)
+            const foundAccount = accountData.find((acc) => acc.id === parsedAccount.id);
+
+            if (foundAccount) {
+              setSelectedAccount(foundAccount);
+              return;
+            }
+          }
+
+          // 3. Fallback: se não tiver nada salvo (ou ID não existir), usa a primeira conta
+          setSelectedAccount(accountData[0]);
+          localStorage.setItem("@finance:selectedAccount", JSON.stringify(accountData[0]));
+        }
       } catch (error) {
         console.error("Erro ao carregar contas:", error.message);
       }
@@ -189,6 +213,13 @@ export default function App() {
   );
   const pendingCount = pendingTransactions.length;
 
+  const handleAccountSelect = (account) => {
+    setSelectedAccount(account);
+    if (account) {
+      localStorage.setItem("@finance:selectedAccount", JSON.stringify(account));
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-[#F4F4F6] text-gray-800 font-sans">
       <Sidebar />
@@ -198,7 +229,7 @@ export default function App() {
           <Header
             accounts={accounts}
             selectedAccount={selectedAccount}
-            onAccountSelect={setSelectedAccount}
+            onAccountSelect={handleAccountSelect}
           />
           <KpiCards
             totalExpenses={totalExpenses}
@@ -228,6 +259,8 @@ export default function App() {
             monthOptions={monthOptions}
             onPageDataChange={setPageTransactions}
             selectedAccount={selectedAccount}
+            categories={categories}
+            setCategories={setCategories}
           />
           <RelatoryButtons />
           <PastelCards transactions={filteredTransactions} />

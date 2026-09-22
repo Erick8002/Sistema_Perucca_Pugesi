@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 import { X, Upload } from 'lucide-react';
 import { supabase } from '../services/supabase';
+import { createPortal } from 'react-dom';
 
 const parseCurrencyInput = (value) => {
     const normalizedValue = String(value)
@@ -24,7 +25,7 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories }) {
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -44,9 +45,13 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [status, setStatus] = useState('Selecione');
     const [installment, setInstallment] = useState("1");
     const [attachedFiles, setAttachedFiles] = useState([]);
+    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState("");
+    
     
     useEffect(() => {
       function handleClickOutside(event) {
+        if(isCategoryModalOpen) return;
         if (selectRef.current && !selectRef.current.contains(event.target)) {
           resetForm();
           onClose();
@@ -58,7 +63,23 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       return () => {
         document.removeEventListener("mousedown", handleClickOutside);
       };
-    }, [isOpen, onClose]);
+    }, [isOpen, onClose, isCategoryModalOpen]);
+
+    useEffect(() => {
+      async function loadCategories() {
+        try{
+          const response = await fetch("http://localhost:3001/api/transactions/categories");
+          if(response.ok) {
+            const data = await response.json();
+            setCategories(data);
+          }
+        } catch (error) {
+          console.error("Erro ao carregar lista de categorias: ", error);
+        }
+      }
+
+      loadCategories();
+    }, []);
     
     useEffect(() => {
       if(!isOpen) return;
@@ -278,8 +299,48 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       }
     };
 
+    const handleCreateCategory = async (e) => {
+      e.preventDefault();
+
+      const trimmedName = newCategoryName.trim();
+      if (!trimmedName) return;
+
+      try {
+        const response = await fetch("http://localhost:3001/api/transactions/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Erro ao salvar categoria no servidor");
+        }
+
+        const createdCategory = await response.json();
+
+        // 1. Atualiza a lista do select com a nova categoria
+        setCategories((prev) => {
+          if (prev.includes(createdCategory.name)) return prev;
+          return [...prev, createdCategory.name].sort();
+        });
+
+        // 2. Define a nova categoria como selecionada no formulário
+        setCategoria(createdCategory.name);
+
+        // 3. Limpa o input e fecha o mini-modal
+        setNewCategoryName("");
+        setIsCategoryModalOpen(false);
+
+      } catch (error) {
+        console.error("Erro ao criar categoria:", error.message);
+        alert(error.message);
+      }
+    };
+
     if(!isOpen) return null;
     return (
+      <>
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4">
         {/* Container do Modal */}
         <div ref={selectRef} className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl bg-white p-4 shadow-2xl transition-all sm:p-6">
@@ -335,9 +396,11 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                     <option value="Defensivos">Defensivos</option>
                 </select> */}
                 <CustomSelect 
-                    options={transactionCategoryOptions}
+                    options={categories}
                     selected={categoria}
                     onSelect={setCategoria}
+                    onAddNew={() => setIsCategoryModalOpen(true)}
+                    addNewLabel="Nova Categoria"
                 />
               </div>
 
@@ -522,5 +585,65 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           </form>
         </div>
       </div>
+      {isCategoryModalOpen && createPortal(
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsCategoryModalOpen(false);
+            setNewCategoryName("");
+          }}
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        >
+          <div 
+          onClick={(e) => {e.stopPropagation()}}
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-gray-100"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Nova Categoria</h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Cadastre uma nova categoria para organizar seus lançamentos.
+            </p>
+
+            <form onSubmit={handleCreateCategory} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Nome da Categoria
+                </label>
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Ex: Combustível, Alimentação..."
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCategoryModalOpen(false);
+                    setNewCategoryName("");
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancelar
+                </button>
+                
+                <button
+                  type="submit"
+                  disabled={!newCategoryName.trim()}
+                  className="rounded-xl bg-purple-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  Salvar Categoria
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body // Injeta diretamente no body, fora do modal pai
+      )}
+      </>
     );
 }

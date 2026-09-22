@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Plus, X } from "lucide-react";
 
-export default function CustomSelect({options = [], selected, onSelect, currentOption}) {
+export default function CustomSelect({ options = [], selected, onSelect, currentOption, onAddNew, addNewLabel = "Nova Opção" }) {
   const [isOpen, setIsOpen] = useState(false);
   const isSelectedCurrent = selected === currentOption;
   const selectRef = useRef(null);
@@ -43,7 +43,23 @@ export default function CustomSelect({options = [], selected, onSelect, currentO
       </button>
 
       {isOpen && (
+        
         <div className="absolute left-0 top-full z-10 mt-1.5 w-full overflow-hidden rounded-xl border border-gray-100 bg-white p-1 shadow-lg ring-1 ring-black/5 animate-in fade-in slide-in-from-top-1 max-h-60 overflow-y-auto">
+          {onAddNew && (
+            <div className="mt-1 border-t border-gray-100 pt-1">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsOpen(false);
+                  onAddNew();
+                }}
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left transition-colors text-emerald-600 hover:bg-emerald-50"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                {addNewLabel}
+              </button>
+            </div>
+          )}
           {options.map((option) => {
             const isCurrent = option === currentOption;
             return (

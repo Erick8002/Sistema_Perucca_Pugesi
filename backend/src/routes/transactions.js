@@ -74,7 +74,7 @@ router.post("/", async (req, res) => {
     const createdTransactions = [];
 
     for (let i = 1; i <= total; i++) {
-      const [year, month, day] = due_date.split("-").map(Number);
+      const [year, month, day] = finalDueDate.split("-").map(Number);
       const baseDate = new Date(year, month - 1 + (i - 1), day);
 
       const result = await pool.query(
@@ -121,6 +121,51 @@ router.post("/", async (req, res) => {
   } catch (error) {
     console.error("Erro ao criar transação: ", error.message);
     return res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
+router.get("/categories", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT name FROM CATEGORIES
+      UNION
+      SELECT DISTINCT category AS name 
+      FROM transactions 
+      WHERE category IS NOT NULL
+      AND category != ''
+      ORDER BY name ASC;
+      `);
+
+      return res.json(result.rows.map((row) => row.name));
+  } catch (error) {
+    console.error("ERro ao buscar categorias: ", error.message);
+    return res.status(500).json({ error: "Erro interno ao buscar categorias" });
+  }
+});
+
+router.post("/categories", async (req, res) => {
+  try {
+    const { name } = req.body;
+
+    if(!name || !name.trim()) {
+      return res.status(400).json({ error: "O nome da categoria é obrigatório." });
+    }
+
+    const trimmedName = name.trim();
+
+    const result = await pool.query(
+      "INSERT INTO categories (name) VALUES ($1) RETURNING *",
+      [trimmedName]
+    );
+    
+    return res.status(201).json(result.rows[0]);
+  } catch (error) {
+    if(error.code === "23505") {
+      return res.status(409).json({ error: "Esta categoria já existe." });
+    }
+
+    console.error("Erro ao salvar categoria: ", error.message);
+    return res.status(500).json({ error: "Erro interno do servidor ao salvar categoria" });
   }
 });
 
