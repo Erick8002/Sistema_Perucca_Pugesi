@@ -169,6 +169,33 @@ router.post("/categories", async (req, res) => {
   }
 });
 
+router.delete("/categories/:name", async (req, res) => {
+  try {
+    const { name } = req.params;
+
+    if(!name) {
+      return res.status(400).json({ error: "O nome da categoria é obrigatório" });
+    }
+
+    const result = await pool.query(
+      `DELETE FROM categories WHERE LOWER(name) = LOWER($1) RETURNING *`,
+      [decodeURIComponent(name)]
+    );
+
+    if(result.rowCount === 0) {
+      return res.status(404).json({ error: "Categoria não encontrada na tabela" });
+    }
+
+    return res.status(200).json({
+      message: "Categoria excluída com sucesso",
+      deletedCategory: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Erro ao excluir categoria: ", error.message);
+    return res.status(500).json({ error: "Erro ao excluir categoria"});
+  }
+});
+
 router.put("/group/:groupId", async (req, res) => {
   const { groupId } = req.params;
   const { supplier, category } = req.body;

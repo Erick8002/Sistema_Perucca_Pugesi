@@ -25,7 +25,7 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory }) {
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -401,6 +401,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                     onSelect={setCategoria}
                     onAddNew={() => setIsCategoryModalOpen(true)}
                     addNewLabel="Nova Categoria"
+                    onDeleteCategory={handleDeleteCategory}
                 />
               </div>
 

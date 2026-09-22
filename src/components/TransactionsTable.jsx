@@ -24,7 +24,8 @@ export default function TransactionsTable({
   onPageDataChange,
   selectedAccount,
   categories,
-  setCategories
+  setCategories,
+  handleDeleteCategory
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
@@ -443,6 +444,7 @@ export default function TransactionsTable({
                 options={categoryOptions}
                 selected={categoryTableHeader}
                 onSelect={setCategoryTableHeader}
+                onDeleteCategory={handleDeleteCategory}
               />
             </div>
 
@@ -467,6 +469,7 @@ export default function TransactionsTable({
               setEditingTransaction={setEditingTransaction}
               categories={categories}
               setCategories={setCategories}
+              handleDeleteCategory={handleDeleteCategory}
             />
           </div>
         </div>

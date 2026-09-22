@@ -220,6 +220,36 @@ export default function App() {
     }
   };
 
+  const handleDeleteCategory = async (e, categoryToDelete) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if(!window.confirm(`Tem certeza que deseja excluir a categoria "${categoryToDelete}"`)) {
+        return;
+      }
+
+      try {
+        const encodedName = encodeURIComponent(categoryToDelete);
+        const response = await fetch(`http://localhost:3001/api/transactions/categories/${encodedName}`, {
+          method: "DELETE"
+        });
+
+        if(!response.ok) {
+          const errorData = await response.json().catch(() => (({})));
+          throw new Error(errorData.error || "Erro ao excluir categoria.");
+        }
+
+        setCategories((prev) => prev.filter((cat) => cat !== categoryToDelete));
+
+        console.log("CATEGORIA: ", categories);
+        if(categories === categoryToDelete) {
+          setCategories("");
+        }
+      } catch(error) {
+        console.error("Erro ao excluir categoria: ", error.message);
+        alert(error.message);
+      }
+    };
+
   return (
     <div className="flex min-h-screen bg-[#F4F4F6] text-gray-800 font-sans">
       <Sidebar />
@@ -261,6 +291,7 @@ export default function App() {
             selectedAccount={selectedAccount}
             categories={categories}
             setCategories={setCategories}
+            handleDeleteCategory={handleDeleteCategory}
           />
           <RelatoryButtons />
           <PastelCards transactions={filteredTransactions} />
