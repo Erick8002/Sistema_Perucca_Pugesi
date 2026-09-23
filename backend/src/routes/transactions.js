@@ -124,17 +124,10 @@ router.post("/", async (req, res) => {
   }
 });
 
+// rota listar categoria
 router.get("/categories", async (req, res) => {
   try {
-    const result = await pool.query(`
-      SELECT name FROM CATEGORIES
-      UNION
-      SELECT DISTINCT category AS name 
-      FROM transactions 
-      WHERE category IS NOT NULL
-      AND category != ''
-      ORDER BY name ASC;
-      `);
+    const result = await pool.query(`SELECT name FROM CATEGORIES ORDER BY name ASC`);
 
       return res.json(result.rows.map((row) => row.name));
   } catch (error) {
@@ -143,6 +136,7 @@ router.get("/categories", async (req, res) => {
   }
 });
 
+// rota adicionar categoria
 router.post("/categories", async (req, res) => {
   try {
     const { name } = req.body;
@@ -169,6 +163,7 @@ router.post("/categories", async (req, res) => {
   }
 });
 
+// rota deletar categoria 
 router.delete("/categories/:name", async (req, res) => {
   try {
     const { name } = req.params;

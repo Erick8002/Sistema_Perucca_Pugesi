@@ -254,9 +254,15 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
             }
 
             // CASO 2: É um NOVO ARQUIVO -> faz upload no Supabase
-            const fileExt = item.file.name.split('.').pop();
-            const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
-            const filePath = `documents/${fileName}`;
+            const year = new Date().getFullYear();
+            const month = String(new Date().getMonth() + 1).padStart(2, '0');
+
+            const subFolder = targetColumn ? targetColumn.replace('_url', '') : 'geral';
+
+            const originalNameClean = item.file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.-]/g, "_")
+
+            const fileName = `${Date.now()}-${originalNameClean}`;
+            const filePath = `documents/${year}/${month}/${subFolder}/${fileName}`;
 
             const { error: uploadError } = await supabase.storage
               .from('transaction_attachments')
