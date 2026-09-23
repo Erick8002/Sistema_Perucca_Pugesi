@@ -45,6 +45,9 @@ export default function App() {
   });
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoria, setCategoria] = useState('Selecione');
+  const [newCategoryName, setNewCategoryName] = useState("");
   const accountTransactions = transactions.filter(
     (transaction) => transaction.accountId === selectedAccount?.id,
   );
@@ -250,6 +253,45 @@ export default function App() {
       }
     };
 
+    const handleCreateCategory = async (e) => {
+      e.preventDefault();
+
+      const trimmedName = newCategoryName.trim();
+      if (!trimmedName) return;
+
+      try {
+        const response = await fetch("http://localhost:3001/api/transactions/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Erro ao salvar categoria no servidor");
+        }
+
+        const createdCategory = await response.json();
+
+        // 1. Atualiza a lista do select com a nova categoria
+        setCategories((prev) => {
+          if (prev.includes(createdCategory.name)) return prev;
+          return [...prev, createdCategory.name].sort();
+        });
+
+        // 2. Define a nova categoria como selecionada no formulário
+        setCategoria(createdCategory.name);
+
+        // 3. Limpa o input e fecha o mini-modal
+        setNewCategoryName("");
+        setIsCategoryModalOpen(false);
+
+      } catch (error) {
+        console.error("Erro ao criar categoria:", error.message);
+        alert(error.message);
+      }
+    };
+
   return (
     <div className="flex min-h-screen bg-[#F4F4F6] text-gray-800 font-sans">
       <Sidebar />
@@ -292,6 +334,11 @@ export default function App() {
             categories={categories}
             setCategories={setCategories}
             handleDeleteCategory={handleDeleteCategory}
+            isCategoryModalOpen={isCategoryModalOpen}
+            setIsCategoryModalOpen={setIsCategoryModalOpen}
+            handleCreateCategory={handleCreateCategory}
+            newCategoryName={newCategoryName}
+            setNewCategoryName={setNewCategoryName}
           />
           <RelatoryButtons />
           <PastelCards transactions={filteredTransactions} />

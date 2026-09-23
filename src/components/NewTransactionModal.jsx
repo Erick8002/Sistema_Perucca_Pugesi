@@ -25,7 +25,7 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory, isCategoryModalOpen, setIsCategoryModalOpen, handleCreateCategory, newCategoryName, setNewCategoryName }) {
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -45,8 +45,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [status, setStatus] = useState('Selecione');
     const [installment, setInstallment] = useState("1");
     const [attachedFiles, setAttachedFiles] = useState([]);
-    const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-    const [newCategoryName, setNewCategoryName] = useState("");
+    
     
     
     useEffect(() => {
@@ -302,45 +301,6 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       } catch (error) {
         console.error('Erro ao processar o envio da transação: ', error);
         alert('Ocorreu um erro ao salvar a transação com os anexos');
-      }
-    };
-
-    const handleCreateCategory = async (e) => {
-      e.preventDefault();
-
-      const trimmedName = newCategoryName.trim();
-      if (!trimmedName) return;
-
-      try {
-        const response = await fetch("http://localhost:3001/api/transactions/categories", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: trimmedName }),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || "Erro ao salvar categoria no servidor");
-        }
-
-        const createdCategory = await response.json();
-
-        // 1. Atualiza a lista do select com a nova categoria
-        setCategories((prev) => {
-          if (prev.includes(createdCategory.name)) return prev;
-          return [...prev, createdCategory.name].sort();
-        });
-
-        // 2. Define a nova categoria como selecionada no formulário
-        setCategoria(createdCategory.name);
-
-        // 3. Limpa o input e fecha o mini-modal
-        setNewCategoryName("");
-        setIsCategoryModalOpen(false);
-
-      } catch (error) {
-        console.error("Erro ao criar categoria:", error.message);
-        alert(error.message);
       }
     };
 

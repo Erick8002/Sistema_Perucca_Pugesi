@@ -5,6 +5,7 @@ import { ActionMenu } from "./ActionMenu";
 import { NewTransactionModal } from "./NewTransactionModal";
 import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
 import { Search, FileText, Plus, BetweenHorizonalEnd, FileCode, Barcode, Receipt } from "lucide-react";
+import { createPortal } from "react-dom";
 
 export default function TransactionsTable({
   filterTransactions,
@@ -25,7 +26,12 @@ export default function TransactionsTable({
   selectedAccount,
   categories,
   setCategories,
-  handleDeleteCategory
+  handleDeleteCategory,
+  isCategoryModalOpen,
+  setIsCategoryModalOpen,
+  handleCreateCategory,
+  newCategoryName,
+  setNewCategoryName
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
@@ -444,6 +450,8 @@ export default function TransactionsTable({
                 options={categoryOptions}
                 selected={categoryTableHeader}
                 onSelect={setCategoryTableHeader}
+                onAddNew={() => setIsCategoryModalOpen(true)}
+                addNewLabel="Nova Categoria"
                 onDeleteCategory={handleDeleteCategory}
               />
             </div>
@@ -470,6 +478,11 @@ export default function TransactionsTable({
               categories={categories}
               setCategories={setCategories}
               handleDeleteCategory={handleDeleteCategory}
+              isCategoryModalOpen={isCategoryModalOpen}
+              setIsCategoryModalOpen={setIsCategoryModalOpen}
+              handleCreateCategory={handleCreateCategory}
+              newCategoryName={newCategoryName}
+              setNewCategoryName={setNewCategoryName}
             />
           </div>
         </div>
@@ -787,6 +800,65 @@ export default function TransactionsTable({
           </div>
         </div>
       </div>
+      {isCategoryModalOpen && createPortal(
+        <div 
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsCategoryModalOpen(false);
+            setNewCategoryName("");
+          }}
+          className="fixed inset-0 z-[999] flex items-center justify-center bg-black/40 backdrop-blur-sm"
+        >
+          <div 
+          onClick={(e) => {e.stopPropagation()}}
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl border border-gray-100"
+          >
+            <h3 className="text-lg font-bold text-gray-900 mb-1">Nova Categoria</h3>
+            <p className="text-xs text-gray-500 mb-4">
+              Cadastre uma nova categoria para organizar seus lançamentos.
+            </p>
+
+            <form onSubmit={handleCreateCategory} className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">
+                  Nome da Categoria
+                </label>
+                <input
+                  type="text"
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  placeholder="Ex: Combustível, Alimentação..."
+                  className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                  autoFocus
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsCategoryModalOpen(false);
+                    setNewCategoryName("");
+                  }}
+                  className="rounded-xl px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 transition-colors"
+                >
+                  Cancelar
+                </button>
+                
+                <button
+                  type="submit"
+                  disabled={!newCategoryName.trim()}
+                  className="rounded-xl bg-purple-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  Salvar Categoria
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>,
+        document.body // Injeta diretamente no body, fora do modal pai
+      )}
     </>
   );
 }
