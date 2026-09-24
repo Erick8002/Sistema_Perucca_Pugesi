@@ -1,7 +1,36 @@
-const express = require("express");
-const pool = require("../db");
+import supabase from "../../services/supabase.js";
+import express from "express";
+import pool from "../db.js";
 const router = express.Router();
-const crypto = require("crypto");
+import crypto from "crypto";
+
+const supabaseClient = supabase?.storage ? supabase : supabase?.storage;
+
+console.log("OBJETO SUPABASE IMPORTADO: ", !!supabaseClient?.storage);
+
+function extractStoragePath(url) {
+  if (!url || typeof url !== "string") return null;
+
+  try {
+    const decodedUrl = decodeURIComponent(url);
+    const parts = decodedUrl.split("/public/");
+
+    if (parts.length > 1) {
+      const fullPath = parts[1]; // Ex: transaction_attachments/pasta/arquivo.pdf
+      const pathSegments = fullPath.split("/");
+
+      if (pathSegments.length >= 2) {
+        const bucketName = pathSegments[0];
+        const relativePath = pathSegments.slice(1).join("/");
+        return { bucketName, relativePath };
+      }
+    }
+  } catch (err) {
+    console.error("Erro ao extrair caminho do storage:", err.message);
+  }
+
+  return null;
+}
 
 // 1. GET / 
 router.get("/", async (req, res) => {
@@ -253,20 +282,77 @@ router
     }
   })
   .delete(async (req, res) => {
+    console.log("Supabase inicializado:", !!supabase);
+    console.log("Storage disponível:", !!supabase?.storage);
+
     try {
       const { id } = req.params;
+
+      const selectResult = await pool.query(
+        `SELECT nfe_url, xml_url, boleto_url, receipt_url
+        FROM transactions
+        WHERE id = $1`,
+        [id]
+      );
+
+      if (selectResult.rowCount === 0) {
+        return res.status(404).json({ error: "Transação não encontrada" });
+      }
+
+      const transaction = selectResult.rows[0];
+
+      const fileUrls = [
+        transaction.nfe_url,
+        transaction.xml_url,
+        transaction.boleto_url,
+        transaction.receipt_url,
+      ].filter(Boolean);
+
+      for (const url of fileUrls) {
+        const checkResult = await pool.query(
+          `SELECT COUNT(*) FROM transactions
+          WHERE (nfe_url = $1 OR xml_url = $1 OR boleto_url = $1 OR receipt_url = $1)
+          AND id != $2`,
+          [url, id]
+        );
+
+        const isUsedElsewhere = parseInt(checkResult.rows[0].count, 10) > 0;
+
+        if (!isUsedElsewhere) {
+          // Extrai diretamente o objeto { bucketName, relativePath }
+          const storageData = extractStoragePath(url);
+
+          if (storageData) {
+            const { bucketName, relativePath } = storageData;
+
+            console.log(`TENTANDO DELETAR DO BUCKET "${bucketName}": ${relativePath}`);
+
+            if (supabaseClient && supabaseClient.storage) {
+              const { error: storageError } = await supabaseClient.storage
+                .from(bucketName)
+                .remove([relativePath]);
+
+              if (storageError) {
+                console.error(`Erro ao deletar arquivo (${relativePath}) do Supabase: `, storageError.message);
+              } else {
+                console.log(`Arquivo ${relativePath} deletado com sucesso do Supabase!`);
+              }
+            } else {
+              console.log("Instância do Supabase ou Storage não está definida.");
+            }
+          } else {
+            console.warn(`Não foi possível extrair caminho do storage da URL: ${url}`);
+          }
+        }
+      }
 
       const result = await pool.query(
         `DELETE FROM transactions WHERE id = $1 RETURNING id`,
         [id]
       );
 
-      if (result.rowCount === 0) {
-        return res.status(404).json({ error: "Transação não encontrada" });
-      }
-
       return res.json({
-        message: "Transação excluída com sucesso",
+        message: "Transação e arquivos associados excluídos com sucesso",
         id: result.rows[0].id,
       });
     } catch (error) {
@@ -295,16 +381,94 @@ router
     } = req.body;
 
     try {
-      const finalDueDate = due_date || dataVencimento;
-      const finalSupplier = supplier || fornecedor;
-      const finalCategory = category || categoria;
-      const finalAmount = Number(amount || valor || 0);
+      const numericId = parseInt(id, 10);
 
-      // Garante a leitura direta do req.body enviando NULL explicitamente se vier null/undefined
+      // 1. Busca os arquivos atuais salvos no banco ANTES da atualização
+      const currentTxResult = await pool.query(
+        `SELECT nfe_url, xml_url, boleto_url, receipt_url FROM transactions WHERE id = $1`,
+        [numericId]
+      );
+
+      if (currentTxResult.rowCount === 0) {
+        return res.status(404).json({ error: "Transação não encontrada" });
+      }
+
+      const currentData = currentTxResult.rows[0];
+      console.log("ARQUIVOS ATUAIS NO BANCO:", currentData);
+
       const finalNfeUrl = nfe_url ?? null;
       const finalXmlUrl = xml_url ?? null;
       const finalBoletoUrl = boleto_url ?? null;
       const finalReceiptUrl = receipt_url ?? null;
+
+      const fileFields = [
+        { oldUrl: currentData.nfe_url, newUrl: finalNfeUrl },
+        { oldUrl: currentData.xml_url, newUrl: finalXmlUrl },
+        { oldUrl: currentData.boleto_url, newUrl: finalBoletoUrl },
+        { oldUrl: currentData.receipt_url, newUrl: finalReceiptUrl },
+      ];
+
+      // 2. Para cada campo, verifica se mudou ou foi removido
+      for (const field of fileFields) {
+        console.log(`Verificando campo -> Antigo: ${field.oldUrl} | Novo: ${field.newUrl}`);
+        
+        if (field.oldUrl && field.oldUrl !== field.newUrl) {
+          console.log("O arquivo mudou ou foi removido! Verificando se é usado noutro lugar...");
+
+          // Verifica se o arquivo antigo ainda é usado em OUTRA transação
+          const checkResult = await pool.query(
+            `SELECT COUNT(*) FROM transactions
+            WHERE (nfe_url = $1 OR xml_url = $1 OR boleto_url = $1 OR receipt_url = $1)
+            AND id != $2`,
+            [field.oldUrl, numericId]
+          );
+
+          const isUsedElsewhere = parseInt(checkResult.rows[0].count, 10) > 0;
+          console.log("É usado noutra transação?", isUsedElsewhere);
+
+          if (!isUsedElsewhere) {
+            try {
+              // Extração segura do bucket e caminho relativo direto da URL do Supabase
+              const urlObj = new URL(field.oldUrl);
+              const pathSegments = urlObj.pathname.split('/').filter(Boolean);
+              
+              // Exemplo de pathname do Supabase: /storage/v1/object/public/transaction_attachments/documents/2026/09/...
+              const publicIndex = pathSegments.indexOf('public');
+              
+              if (publicIndex !== -1 && pathSegments.length > publicIndex + 1) {
+                const bucketName = pathSegments[publicIndex + 1];
+                const relativePath = pathSegments.slice(publicIndex + 2).join('/');
+
+                console.log(`Bucket identificado: ${bucketName} | Caminho relativo: ${relativePath}`);
+
+                if (typeof supabase !== 'undefined' && supabase && supabase.storage) {
+                  const { data, error: storageError } = await supabase.storage
+                    .from(bucketName)
+                    .remove([relativePath]);
+
+                  if (storageError) {
+                    console.error("❌ Erro retornado pelo Supabase Storage:", storageError.message);
+                  } else {
+                    console.log("✅ Arquivo deletado com sucesso do Supabase!", data);
+                  }
+                } else {
+                  console.error("❌ ERRO: A variável 'supabase' não está definida ou importada neste ficheiro de rotas!");
+                }
+              } else {
+                console.error("❌ Não foi possível encontrar o segmento 'public' na URL:", field.oldUrl);
+              }
+            } catch (urlErr) {
+              console.error("❌ Erro ao fazer parsing da URL do Supabase:", urlErr.message);
+            }
+          }
+        }
+      }
+
+      // 3. Executa o UPDATE no PostgreSQL
+      const finalDueDate = due_date || dataVencimento;
+      const finalSupplier = supplier || fornecedor;
+      const finalCategory = category || categoria;
+      const finalAmount = Number(amount || valor || 0);
 
       const result = await pool.query(
         `
@@ -332,7 +496,7 @@ router
           finalXmlUrl, 
           finalBoletoUrl, 
           finalReceiptUrl, 
-          parseInt(id, 10) // Conversão de segurança para INTEGER
+          numericId
         ]
       );
 
@@ -351,4 +515,4 @@ router
     }
   });
 
-module.exports = router;
+export default router;

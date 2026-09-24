@@ -1,9 +1,10 @@
-const express = require('express'); // Importa a biblioteca express
-const cors = require('cors');
-const pool = require('./db');
-const accountsRoutes = require('./routes/accounts');
-const transactionsRoutes = require('./routes/transactions');
-require('dotenv').config(); // Carrega o arquivo .env e o .config() ativa o carregamento
+import express from 'express'; // Importa a biblioteca express
+import cors from 'cors';
+import pool from './db.js';
+import accountsRoutes from './routes/accounts.js';
+import transactionsRoutes from './routes/transactions.js';
+import dotenv from 'dotenv';
+dotenv.config(); // Carrega o arquivo .env e o .config() ativa o carregamento
 
 const app = express(); // Aqui ele cria o servidor
 const PORT = process.env.PORT || 3001;

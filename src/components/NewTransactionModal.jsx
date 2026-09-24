@@ -46,8 +46,6 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [installment, setInstallment] = useState("1");
     const [attachedFiles, setAttachedFiles] = useState([]);
     
-    
-    
     useEffect(() => {
       function handleClickOutside(event) {
         if(isCategoryModalOpen) return;
