@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 import { X, Upload } from 'lucide-react';
-// import { supabase } from '../services/supabase';
+import { supabase } from '../services/supabase';
 import { createPortal } from 'react-dom';
 
 const parseCurrencyInput = (value) => {
@@ -235,6 +235,13 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           'receipt_url': 'receipt_url'
         };
 
+        const folderMap = {
+          nfe_url: 'nfe',
+          xml_url: 'xml',
+          boleto_url: 'boleto',
+          receipt_url: 'receipt'
+        };
+
         if (attachedFiles && attachedFiles.length > 0) {
           for (const item of attachedFiles) {
             if (!item) continue;
@@ -254,7 +261,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
             const year = new Date().getFullYear();
             const month = String(new Date().getMonth() + 1).padStart(2, '0');
 
-            const subFolder = targetColumn ? targetColumn.replace('_url', '') : 'geral';
+            const subFolder = folderMap[targetColumn] || 'geral';
 
             const originalNameClean = item.file.name.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-zA-Z0-9.-]/g, "_")
 
@@ -278,6 +285,24 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
               uploadedUrls[targetColumn] = publicUrlData.publicUrl;
             }
           }
+        }
+
+        const year = new Date().getFullYear();
+        const month = String(new Date().getMonth() + 1).padStart(2, '0');
+        const receiptPlaceholderPath = `documents/${year}/${month}/receipt/.keep`;
+        const { error: placeholderError } = await supabase.storage
+          .from('transaction_attachments')
+          .upload(
+            receiptPlaceholderPath,
+            new Blob(['keep'], { type: 'text/plain' }),
+            { upsert: true, contentType: 'text/plain' }
+          );
+
+        if (placeholderError) {
+          console.warn(
+            'Não foi possível manter o prefixo receipt:',
+            placeholderError.message
+          );
         }
 
         console.log("URLS GERADAS E MAPEADAS:", uploadedUrls);
