@@ -7,7 +7,7 @@ import dotenv from 'dotenv';
 dotenv.config(); // Carrega o arquivo .env e o .config() ativa o carregamento
 
 const app = express(); // Aqui ele cria o servidor
-const PORT = process.env.PORT || 3001;
+const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors());

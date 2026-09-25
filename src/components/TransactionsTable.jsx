@@ -52,8 +52,8 @@ export default function TransactionsTable({
 
     console.log("isEditing: " ,isEditing);
     const url = isEditing
-      ? `http://localhost:3001/api/transactions/${editingTransaction.id}`
-      : "http://localhost:3001/api/transactions/";
+      ? `http://localhost:3000/api/transactions/${editingTransaction.id}`
+      : "http://localhost:3000/api/transactions/";
 
     const method = isEditing ? "PUT" : "POST";
     const rawDate = newTransaction.vencimento || newTransaction.dueDate;
@@ -168,7 +168,7 @@ export default function TransactionsTable({
   const handleDeleteTransaction = async (idToDelete) => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/transactions/${idToDelete}`,
+        `http://localhost:3000/api/transactions/${idToDelete}`,
         {
           method: "DELETE",
         },
@@ -211,7 +211,7 @@ export default function TransactionsTable({
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/transactions/${transaction.id}`,
+        `http://localhost:3000/api/transactions/${transaction.id}`,
         {
           method: "PATCH",
           headers: {

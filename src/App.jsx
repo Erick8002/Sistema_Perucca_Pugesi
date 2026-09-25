@@ -71,7 +71,7 @@ export default function App() {
   useEffect(() => {
     async function loadAccounts() {
       try {
-        const response = await fetch("http://localhost:3001/api/accounts");
+        const response = await fetch("http://localhost:3000/api/accounts");
 
         if (!response.ok) {
           throw new Error("Não foi possível carregar as contas");
@@ -110,7 +110,7 @@ export default function App() {
   useEffect(() => {
     async function loadTransactions() {
       try {
-        const response = await fetch("http://localhost:3001/api/transactions");
+        const response = await fetch("http://localhost:3000/api/transactions");
 
         if (!response.ok) {
           throw new Error("Não foi possível carregar as transações");
@@ -232,7 +232,7 @@ export default function App() {
 
       try {
         const encodedName = encodeURIComponent(categoryToDelete);
-        const response = await fetch(`http://localhost:3001/api/transactions/categories/${encodedName}`, {
+        const response = await fetch(`http://localhost:3000/api/transactions/categories/${encodedName}`, {
           method: "DELETE"
         });
 
@@ -260,7 +260,7 @@ export default function App() {
       if (!trimmedName) return;
 
       try {
-        const response = await fetch("http://localhost:3001/api/transactions/categories", {
+        const response = await fetch("http://localhost:3000/api/transactions/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: trimmedName }),

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
 import { X, Upload } from 'lucide-react';
-import { supabase } from '../services/supabase';
+// import { supabase } from '../services/supabase';
 import { createPortal } from 'react-dom';
 
 const parseCurrencyInput = (value) => {
@@ -65,7 +65,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     useEffect(() => {
       async function loadCategories() {
         try{
-          const response = await fetch("http://localhost:3001/api/transactions/categories");
+          const response = await fetch("http://localhost:3000/api/transactions/categories");
           if(response.ok) {
             const data = await response.json();
             setCategories(data);
