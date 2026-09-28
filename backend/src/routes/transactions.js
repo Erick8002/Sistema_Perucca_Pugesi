@@ -77,6 +77,7 @@ router.post("/", async (req, res) => {
     fornecedor,
     category,
     categoria,
+    category_id,
     amount,
     valor,
     status,
@@ -86,12 +87,14 @@ router.post("/", async (req, res) => {
     boleto_url = null,
     receipt_url = null
   } = req.body;
-
+  
   try {
     const finalDueDate = due_date || dataVencimento;
     const finalSupplier = supplier || fornecedor || null;
     const finalCategory = category || categoria || null;
     const finalAmount = Number(amount || valor || 0);
+    const finalAccountId = account_id ? parseInt(account_id, 10) : null;
+    const finalCategoryId = category_id ? parseInt(category_id, 10) : null;
 
     if(!finalDueDate) {
       return res.status(400).json({ error: "A data de vencimento é obrigatória." });
@@ -121,13 +124,14 @@ router.post("/", async (req, res) => {
                 nfe_url,
                 xml_url,
                 boleto_url,
-                receipt_url
+                receipt_url,
+                category_id
                 )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
             RETURNING *
           `,
         [
-          account_id,
+          finalAccountId,
           baseDate,
           finalSupplier,
           finalCategory,
@@ -139,7 +143,8 @@ router.post("/", async (req, res) => {
           nfe_url,
           xml_url,
           boleto_url,
-          receipt_url
+          receipt_url,
+          finalCategoryId
         ]
       );
 
@@ -156,11 +161,11 @@ router.post("/", async (req, res) => {
 // rota listar categoria
 router.get("/categories", async (req, res) => {
   try {
-    const result = await pool.query(`SELECT name FROM CATEGORIES ORDER BY name ASC`);
+    const result = await pool.query(`SELECT id, name FROM categories ORDER BY name ASC`);
 
-      return res.json(result.rows.map((row) => row.name));
+      return res.json(result.rows);
   } catch (error) {
-    console.error("ERro ao buscar categorias: ", error.message);
+    console.error("Erro ao buscar categorias: ", error.message);
     return res.status(500).json({ error: "Erro interno ao buscar categorias" });
   }
 });
@@ -282,8 +287,8 @@ router
     }
   })
   .delete(async (req, res) => {
-    console.log("Supabase inicializado:", !!supabase);
-    console.log("Storage disponível:", !!supabase?.storage);
+    console.log("Supabase inicializado:", !!supabaseClient);
+    console.log("Storage disponível:", !!supabaseClient?.storage);
 
     try {
       const { id } = req.params;
@@ -350,6 +355,10 @@ router
         `DELETE FROM transactions WHERE id = $1 RETURNING id`,
         [id]
       );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: "Transação não encontrada ao deletar do banco." });
+      }
 
       return res.json({
         message: "Transação e arquivos associados excluídos com sucesso",
