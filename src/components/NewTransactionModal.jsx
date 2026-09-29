@@ -289,9 +289,16 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         
         console.log("URLS GERADAS E MAPEADAS:", uploadedUrls);
 
+        const selectedCategoryObject = categories.find(
+          (cat) => (typeof cat === 'object' ?  cat.name : cat) === categoria
+        );
+
+        const categoryIdToSend = selectedCategoryObject?.id || null;
+
         await onSave({
           ...formData,
           ...uploadedUrls,
+          category_id: categoryIdToSend,
           categoria: categoria,
           valor: parsedValue,
           status: status === 'Selecione' || !status ? "Pendente" : status,
@@ -299,7 +306,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           group_id: formData.group_id
         });
 
-        if (typeof setAttachedFiles === 'function') setAttachedFiles([]);
+        if (typeof setAttachedFiles === 'function')setAttachedFiles([]);
         resetForm();
         onClose();
 
