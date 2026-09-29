@@ -52,8 +52,8 @@ export default function TransactionsTable({
 
     console.log("isEditing: " ,isEditing);
     const url = isEditing
-      ? `http://localhost:3000/api/transactions/${editingTransaction.id}`
-      : "http://localhost:3000/api/transactions/";
+      ? `http://localhost:3001/api/transactions/${editingTransaction.id}`
+      : "http://localhost:3001/api/transactions/";
 
     const method = isEditing ? "PUT" : "POST";
     const rawDate = newTransaction.vencimento || newTransaction.dueDate;
@@ -82,6 +82,7 @@ export default function TransactionsTable({
         due_date: validDate,
         supplier: newTransaction.fornecedor,
         category: newTransaction.categoria,
+        category_id: newTransaction.category_id,
         amount: Number(newTransaction.valor),
         status: newTransaction.status || "Pendente",
         ...(isEditing ? {} : { total_installment: totalInstallmentNum }),
@@ -117,6 +118,7 @@ export default function TransactionsTable({
         vencimento: responseData.due_date ? String(responseData.due_date).slice(0, 10) : validDate,
         fornecedor: responseData.supplier,
         categoria: responseData.category,
+        category_id: responseData.category_id,
         valor: Number(responseData.amount),
         status: responseData.status,
         current_installment: responseData.current_installment,
@@ -140,6 +142,7 @@ export default function TransactionsTable({
           vencimento: item.due_date ? String(item.due_date).slice(0, 10) : validDate,
           fornecedor: item.supplier,
           categoria: item.category,
+          category_id: item.category_id,
           valor: Number(item.amount),
           status: item.status,
           current_installment: item.current_installment,
@@ -168,7 +171,7 @@ export default function TransactionsTable({
   const handleDeleteTransaction = async (idToDelete) => {
     try {
       const response = await fetch(
-        `http://localhost:3000/api/transactions/${idToDelete}`,
+        `http://localhost:3001/api/transactions/${idToDelete}`,
         {
           method: "DELETE",
         },
@@ -211,7 +214,7 @@ export default function TransactionsTable({
 
     try {
       const response = await fetch(
-        `http://localhost:3000/api/transactions/${transaction.id}`,
+        `http://localhost:3001/api/transactions/${transaction.id}`,
         {
           method: "PATCH",
           headers: {
@@ -447,7 +450,7 @@ export default function TransactionsTable({
 
             <div className="p-2">
               <CustomSelect
-                options={categoryOptions}
+                options={categoryOptions.map(cat => typeof cat === 'object' ? cat.name : cat)}
                 selected={categoryTableHeader}
                 onSelect={setCategoryTableHeader}
                 onAddNew={() => setIsCategoryModalOpen(true)}
@@ -818,7 +821,7 @@ export default function TransactionsTable({
               Cadastre uma nova categoria para organizar seus lançamentos.
             </p>
 
-            <form onSubmit={handleCreateCategory} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Nome da Categoria
@@ -827,6 +830,15 @@ export default function TransactionsTable({
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if(e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if(newCategoryName.trim()) {
+                        handleCreateCategory(newCategoryName, e);
+                      }
+                    }
+                  }}
                   placeholder="Ex: Combustível, Alimentação..."
                   className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                   autoFocus
@@ -837,6 +849,7 @@ export default function TransactionsTable({
                 <button
                   type="button"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setIsCategoryModalOpen(false);
                     setNewCategoryName("");
@@ -848,13 +861,20 @@ export default function TransactionsTable({
                 
                 <button
                   type="submit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateCategory(newCategoryName, e);
+                    setIsCategoryModalOpen(false);
+                    setNewCategoryName("");
+                  }}
                   disabled={!newCategoryName.trim()}
                   className="rounded-xl bg-purple-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
                 >
                   Salvar Categoria
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>,
         document.body // Injeta diretamente no body, fora do modal pai

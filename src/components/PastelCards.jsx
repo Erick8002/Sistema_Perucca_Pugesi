@@ -26,7 +26,7 @@ const formatBrazilianNumber = (value) => {
 };
 
 export default function PastelCards({ transactions = [] }) {
-  const [thresholdValue, setThresholdValue] = useState(3000);
+  const [thresholdValue, setThresholdValue] = useState(3001);
   const [expandedCard, setExpandedCard] = useState(null);
 
   const today = new Date();

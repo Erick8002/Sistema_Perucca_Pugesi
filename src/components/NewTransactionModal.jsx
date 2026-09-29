@@ -65,7 +65,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     useEffect(() => {
       async function loadCategories() {
         try{
-          const response = await fetch("http://localhost:3000/api/transactions/categories");
+          const response = await fetch("http://localhost:3001/api/transactions/categories");
           if(response.ok) {
             const data = await response.json();
             setCategories(data);
@@ -286,25 +286,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
             }
           }
         }
-
-        const year = new Date().getFullYear();
-        const month = String(new Date().getMonth() + 1).padStart(2, '0');
-        const receiptPlaceholderPath = `documents/${year}/${month}/receipt/.keep`;
-        const { error: placeholderError } = await supabase.storage
-          .from('transaction_attachments')
-          .upload(
-            receiptPlaceholderPath,
-            new Blob(['keep'], { type: 'text/plain' }),
-            { upsert: true, contentType: 'text/plain' }
-          );
-
-        if (placeholderError) {
-          console.warn(
-            'Não foi possível manter o prefixo receipt:',
-            placeholderError.message
-          );
-        }
-
+        
         console.log("URLS GERADAS E MAPEADAS:", uploadedUrls);
 
         await onSave({
@@ -385,7 +367,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                     <option value="Defensivos">Defensivos</option>
                 </select> */}
                 <CustomSelect 
-                    options={categories}
+                    options={categories.map(cat => typeof cat === 'object' ? cat.name : cat)}
                     selected={categoria}
                     onSelect={setCategoria}
                     onAddNew={() => setIsCategoryModalOpen(true)}
@@ -593,7 +575,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
               Cadastre uma nova categoria para organizar seus lançamentos.
             </p>
 
-            <form onSubmit={handleCreateCategory} className="space-y-4">
+            <div className="space-y-4">
               <div>
                 <label className="block text-xs font-medium text-gray-700 mb-1">
                   Nome da Categoria
@@ -602,6 +584,15 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                   type="text"
                   value={newCategoryName}
                   onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if(e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if(newCategoryName.trim()) {
+                        handleCreateCategory(newCategoryName, e);
+                      }
+                    }
+                  }}
                   placeholder="Ex: Combustível, Alimentação..."
                   className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm text-gray-800 outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                   autoFocus
@@ -612,6 +603,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 <button
                   type="button"
                   onClick={(e) => {
+                    e.preventDefault();
                     e.stopPropagation();
                     setIsCategoryModalOpen(false);
                     setNewCategoryName("");
@@ -623,13 +615,20 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 
                 <button
                   type="submit"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleCreateCategory(newCategoryName, e);
+                    setIsCategoryModalOpen(false);
+                    setNewCategoryName("");
+                  }}
                   disabled={!newCategoryName.trim()}
                   className="rounded-xl bg-purple-600 px-4 py-2 text-xs font-medium text-white shadow-sm hover:bg-purple-700 transition-colors disabled:opacity-50"
                 >
                   Salvar Categoria
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>,
         document.body // Injeta diretamente no body, fora do modal pai

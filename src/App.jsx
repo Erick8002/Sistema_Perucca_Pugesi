@@ -71,7 +71,7 @@ export default function App() {
   useEffect(() => {
     async function loadAccounts() {
       try {
-        const response = await fetch("http://localhost:3000/api/accounts");
+        const response = await fetch("http://localhost:3001/api/accounts");
 
         if (!response.ok) {
           throw new Error("Não foi possível carregar as contas");
@@ -110,7 +110,7 @@ export default function App() {
   useEffect(() => {
     async function loadTransactions() {
       try {
-        const response = await fetch("http://localhost:3000/api/transactions");
+        const response = await fetch("http://localhost:3001/api/transactions");
 
         if (!response.ok) {
           throw new Error("Não foi possível carregar as transações");
@@ -232,7 +232,7 @@ export default function App() {
 
       try {
         const encodedName = encodeURIComponent(categoryToDelete);
-        const response = await fetch(`http://localhost:3000/api/transactions/categories/${encodedName}`, {
+        const response = await fetch(`http://localhost:3001/api/transactions/categories/${encodedName}`, {
           method: "DELETE"
         });
 
@@ -241,11 +241,19 @@ export default function App() {
           throw new Error(errorData.error || "Erro ao excluir categoria.");
         }
 
-        setCategories((prev) => prev.filter((cat) => cat !== categoryToDelete));
+        setCategories((prev) => {
+          const updatedCategories = prev.filter((cat) => {
+            const name = typeof cat === 'object' ? cat.name : cat;
+            return name !== categoryToDelete;
+          });
 
-        console.log("CATEGORIA: ", categories);
-        if(categories === categoryToDelete) {
-          setCategories("");
+          return updatedCategories;
+        });
+
+        console.log("CATEGORIA DELETAR: ", categoryToDelete);
+
+        if(categoria === categoryToDelete) {
+          setCategoria("");
         }
       } catch(error) {
         console.error("Erro ao excluir categoria: ", error.message);
@@ -253,14 +261,17 @@ export default function App() {
       }
     };
 
-    const handleCreateCategory = async (e) => {
-      e.preventDefault();
-
-      const trimmedName = newCategoryName.trim();
-      if (!trimmedName) return;
+    const handleCreateCategory = async (categoryName, e) => {
+      if(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      const trimmedName = typeof categoryName === 'string' ? categoryName.trim() : "";
+      if (!trimmedName) return null;
 
       try {
-        const response = await fetch("http://localhost:3000/api/transactions/categories", {
+        const response = await fetch("http://localhost:3001/api/transactions/categories", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: trimmedName }),
@@ -273,22 +284,13 @@ export default function App() {
 
         const createdCategory = await response.json();
 
-        // 1. Atualiza a lista do select com a nova categoria
-        setCategories((prev) => {
-          if (prev.includes(createdCategory.name)) return prev;
-          return [...prev, createdCategory.name].sort();
-        });
+        setCategories((prev) => [...prev, createdCategory]);
 
-        // 2. Define a nova categoria como selecionada no formulário
-        setCategoria(createdCategory.name);
-
-        // 3. Limpa o input e fecha o mini-modal
-        setNewCategoryName("");
-        setIsCategoryModalOpen(false);
-
+        return createdCategory  
       } catch (error) {
         console.error("Erro ao criar categoria:", error.message);
         alert(error.message);
+        return null;
       }
     };
 
