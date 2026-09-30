@@ -4,6 +4,7 @@ import { DateInput } from "./DateInput";
 import { ActionMenu } from "./ActionMenu";
 import { NewTransactionModal } from "./NewTransactionModal";
 import { TransactionDetailsDrawer } from "./TransactionDetailsDrawer";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 import { Search, FileText, Plus, BetweenHorizonalEnd, FileCode, Barcode, Receipt } from "lucide-react";
 import { createPortal } from "react-dom";
 
@@ -40,6 +41,8 @@ export default function TransactionsTable({
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(null);
   const [editingTransaction, setEditingTransaction] = useState(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null); 
 
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
 
@@ -168,6 +171,11 @@ export default function TransactionsTable({
     }
   };
 
+  const handleOpenDeleteModal = (item) => {
+    setItemToDelete(item);
+    setIsDeleteModalOpen(true);
+  };
+
   const handleDeleteTransaction = async (idToDelete) => {
     try {
       const response = await fetch(
@@ -184,6 +192,7 @@ export default function TransactionsTable({
       setTransactions((prev) => prev.filter((item) => item.id !== idToDelete));
     } catch (error) {
       console.error("Erro ao excluir transação: ", error.message);
+      throw error;
     }
   };
 
@@ -728,7 +737,7 @@ export default function TransactionsTable({
                         >
                           <ActionMenu
                             item={item}
-                            onDelete={handleDeleteTransaction}
+                            onDelete={() => handleOpenDeleteModal(item)}
                             onEdit={handleOpenEditModal}
                           />
                         </div>
@@ -879,6 +888,20 @@ export default function TransactionsTable({
         </div>,
         document.body // Injeta diretamente no body, fora do modal pai
       )}
+      <ConfirmDeleteModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setItemToDelete(null);
+        }}
+        onConfirm={() => handleDeleteTransaction(itemToDelete?.id)}
+        title="Deletar Lançamento"
+        description={
+          itemToDelete
+            ? `Tem certeza que deseja apagar o lançamento ${itemToDelete.fornecedor || 'selecionado'} no valor de R$ ${itemToDelete.valor}?`
+            : "Tem certeza que deseja apagar este lançamento?"
+        }
+      />
     </>
   );
 }
