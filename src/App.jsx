@@ -123,6 +123,7 @@ export default function App() {
           accountId: t.account_id,
           vencimento: t.data_vencimento?.slice(0, 10),
           fornecedor: t.fornecedor,
+          descricao: t.descricao,
           categoria: t.categoria,
           valor: t.valor,
           status: t.status,

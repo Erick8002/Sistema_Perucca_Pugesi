@@ -33,6 +33,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const initialFormState = {
       vencimento: '',
       fornecedor: '',
+      descricao: '',
       categoria: '',
       valor: '',
       status: '',
@@ -86,6 +87,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       if (isEditing && editingTransaction) {
         setFormData({
           fornecedor: editingTransaction.fornecedor || "",
+          descricao: editingTransaction.descricao || "",
           valor: editingTransaction.valor || "",
           vencimento: editingTransaction.vencimento || "",
           status: editingTransaction.status || "Pendente",
@@ -210,6 +212,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
 
       if (parsedValue <= 0) {
         alert('Informe um valor válido maior que zero.');
+        setLoading(false);
         return;
       }
 
@@ -299,9 +302,10 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
 
         const categoryIdToSend = selectedCategoryObject?.id || null;
 
-        await onSave({
+        const saved = await onSave({
           ...formData,
           ...uploadedUrls,
+          descricao: formData.descricao?.trim() || "",
           category_id: categoryIdToSend,
           categoria: categoria,
           valor: parsedValue,
@@ -309,6 +313,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           installment: formData.installment || '1',
           group_id: formData.group_id
         });
+
+        if (saved === false) return;
 
         if (typeof setAttachedFiles === 'function')setAttachedFiles([]);
         resetForm();
@@ -360,6 +366,20 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 onChange={handleChange}
                 placeholder="Digite o fornecedor"
                 className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-purple-500 focus:bg-white focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-semibold text-slate-700">
+                Descrição detalhada
+              </label>
+              <textarea
+                name="descricao"
+                value={formData.descricao || ""}
+                onChange={handleChange}
+                rows={3}
+                placeholder="Detalhes da transação (opcional)"
+                className="mt-1 w-full resize-y rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-purple-500 focus:bg-white focus:outline-none"
               />
             </div>
 

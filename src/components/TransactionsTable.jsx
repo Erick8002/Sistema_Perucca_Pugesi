@@ -84,6 +84,7 @@ export default function TransactionsTable({
         account_id: selectedAccount.id,
         due_date: validDate,
         supplier: newTransaction.fornecedor,
+        descricao: newTransaction.descricao?.trim() || null,
         category: newTransaction.categoria,
         category_id: newTransaction.category_id,
         amount: Number(newTransaction.valor),
@@ -108,11 +109,11 @@ export default function TransactionsTable({
         body: JSON.stringify(payload),
       });
 
-      if(!response.ok) {
-        throw new Error(`Erro na requisição: ${response.statusText}`);
-      }
-
       const responseData = await response.json();
+
+      if(!response.ok) {
+        throw new Error(responseData.error || `Erro na requisição: ${response.statusText}`);
+      }
 
       if (isEditing) {
       const updatedFormatted = {
@@ -120,6 +121,7 @@ export default function TransactionsTable({
         accountId: responseData.account_id || selectedAccount.id,
         vencimento: responseData.due_date ? String(responseData.due_date).slice(0, 10) : validDate,
         fornecedor: responseData.supplier,
+        descricao: responseData.descricao,
         categoria: responseData.category,
         category_id: responseData.category_id,
         valor: Number(responseData.amount),
@@ -144,6 +146,7 @@ export default function TransactionsTable({
           accountId: item.account_id || selectedAccount.id,
           vencimento: item.due_date ? String(item.due_date).slice(0, 10) : validDate,
           fornecedor: item.supplier,
+          descricao: item.descricao,
           categoria: item.category,
           category_id: item.category_id,
           valor: Number(item.amount),
@@ -164,10 +167,12 @@ export default function TransactionsTable({
       setIsModalOpen(false);
       setEditingTransaction(null);
       setCurrentPage(1);
+      return true;
 
     } catch (error) {
       console.error("Erro ao salvar transação: ", error);
-      alert("Falha ao salvar a transação.");
+      alert(error.message || "Falha ao salvar a transação.");
+      return false;
     }
   };
 
@@ -251,6 +256,18 @@ export default function TransactionsTable({
     setSelectedTransaction(transaction);
     setIsDrawerOpen(true);
   };
+
+  useEffect(() => {
+    if (!selectedTransaction) return;
+
+    const currentTransaction = transactions.find(
+      (transaction) => transaction.id === selectedTransaction.id
+    );
+
+    if (currentTransaction && currentTransaction !== selectedTransaction) {
+      setSelectedTransaction(currentTransaction);
+    }
+  }, [transactions, selectedTransaction]);
 
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
@@ -480,7 +497,7 @@ export default function TransactionsTable({
               onClose={() => setIsModalOpen(false)}
               onSave={async (data) => {
                 console.log("Dados recebidos no Pai para salvar: ", data);
-                await handleSaveTransaction(data);
+                return handleSaveTransaction(data);
               }}
               categoryOptions={categoryOptions}
               statusOptions={statusOptions}

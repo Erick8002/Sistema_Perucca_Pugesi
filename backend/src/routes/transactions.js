@@ -1,10 +1,16 @@
 import supabase from "../../services/supabase.js";
 import express from "express";
 import pool from "../db.js";
-const router = express.Router();
 import crypto from "crypto";
+// import { createClient } from "@supabase/supabase-js";
 
+const router = express.Router();
 const supabaseClient = supabase?.storage ? supabase : supabase?.storage;
+
+// const supabaseAdmin = createClient(
+//   process.env.SUPABASE_URL,
+//   process.env.SPUABASE_SERVICE_ROLE_KEY
+// );
 
 console.log("OBJETO SUPABASE IMPORTADO: ", !!supabaseClient?.storage);
 
@@ -32,6 +38,65 @@ function extractStoragePath(url) {
   return null;
 }
 
+// Rota de automação chamada pelo n8n.
+router.post("/automation", async (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+  if (!apiKey || apiKey !== process.env.AUTOMATION_API_KEY) {
+    return res.status(401).json({ error: "Acesso não autorizado: chave de API inválida" });
+  }
+
+  const {
+    account_id,
+    due_date,
+    data_vencimento,
+    supplier,
+    fornecedor,
+    category,
+    categoria,
+    amount,
+    valor,
+    descricao,
+    status
+  } = req.body || {};
+
+  if (descricao !== undefined && descricao !== null && typeof descricao !== "string") {
+    return res.status(400).json({ error: "O campo descricao deve ser um texto." });
+  }
+
+  const finalAccountId = Number(account_id);
+  const finalAmount = Number(amount ?? valor);
+  if (!Number.isInteger(finalAccountId) || finalAccountId <= 0 || !Number.isFinite(finalAmount) || finalAmount < 0) {
+    return res.status(400).json({ error: "Campos obrigatórios inválidos: account_id e valor." });
+  }
+
+  try {
+    const result = await pool.query(
+      `INSERT INTO transactions (
+        account_id, due_date, supplier, category, amount, descricao, status
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        finalAccountId,
+        due_date || data_vencimento || new Date().toISOString().split("T")[0],
+        supplier || fornecedor || "Não identificado",
+        category || categoria || "Outros",
+        finalAmount,
+        descricao?.trim() || "Transação registrada via automação",
+        status || "Pendente"
+      ]
+    );
+
+    return res.status(201).json({
+      message: "Transação registrada com sucesso.",
+      transaction: result.rows[0]
+    });
+  } catch (error) {
+    console.error("Erro ao registrar transação via automação:", error.message);
+    return res.status(500).json({ error: "Erro ao registrar transação na base de dados." });
+  }
+});
+
 // 1. GET / 
 router.get("/", async (req, res) => {
   try {
@@ -43,6 +108,8 @@ router.get("/", async (req, res) => {
                 t.due_date AS data_vencimento,
                 t.supplier AS fornecedor,
                 t.category AS categoria,
+                t.category_id,
+                t.descricao,
                 t.total_installment AS total_installment,
                 t.current_installment AS current_installment,
                 t.amount AS valor,
@@ -78,6 +145,7 @@ router.post("/", async (req, res) => {
     category,
     categoria,
     category_id,
+    descricao,
     amount,
     valor,
     status,
@@ -96,8 +164,20 @@ router.post("/", async (req, res) => {
     const finalAccountId = account_id ? parseInt(account_id, 10) : null;
     const finalCategoryId = category_id ? parseInt(category_id, 10) : null;
 
+    if (descricao !== undefined && descricao !== null && typeof descricao !== "string") {
+      return res.status(400).json({ error: "O campo descricao deve ser um texto." });
+    }
+
     if(!finalDueDate) {
       return res.status(400).json({ error: "A data de vencimento é obrigatória." });
+    }
+
+    if (!Number.isInteger(finalAccountId) || finalAccountId <= 0) {
+      return res.status(400).json({ error: "A conta é obrigatória." });
+    }
+
+    if (!Number.isFinite(finalAmount) || finalAmount < 0) {
+      return res.status(400).json({ error: "O valor deve ser um número maior ou igual a zero." });
     }
 
     const groupId = crypto.randomUUID();
@@ -125,9 +205,10 @@ router.post("/", async (req, res) => {
                 xml_url,
                 boleto_url,
                 receipt_url,
-                category_id
+                category_id,
+                descricao
                 )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING *
           `,
         [
@@ -144,7 +225,8 @@ router.post("/", async (req, res) => {
           xml_url,
           boleto_url,
           receipt_url,
-          finalCategoryId
+          finalCategoryId,
+          descricao ?? null
         ]
       );
 
@@ -227,7 +309,11 @@ router.delete("/categories/:name", async (req, res) => {
 
 router.put("/group/:groupId", async (req, res) => {
   const { groupId } = req.params;
-  const { supplier, category } = req.body;
+  const { supplier, category, descricao } = req.body;
+
+  if (descricao !== undefined && descricao !== null && typeof descricao !== "string") {
+    return res.status(400).json({ error: "O campo descricao deve ser um texto." });
+  }
 
   try {
     const result = await pool.query(
@@ -235,11 +321,12 @@ router.put("/group/:groupId", async (req, res) => {
         UPDATE transactions
         SET
           supplier = $1,
-          category = $2
-        WHERE group_id = $3
+          category = $2,
+          descricao = CASE WHEN $3 THEN $4 ELSE descricao END
+        WHERE group_id = $5
         RETURNING *;
         `,
-      [supplier, category, groupId]
+      [supplier, category, descricao !== undefined, descricao ?? null, groupId]
     );
 
     if (result.rows.length === 0) {
@@ -383,14 +470,24 @@ router
       amount, 
       valor, 
       status,
+      descricao,
       nfe_url,
       xml_url,
       boleto_url,
       receipt_url
     } = req.body;
 
+    if (descricao !== undefined && descricao !== null && typeof descricao !== "string") {
+      return res.status(400).json({ error: "O campo descricao deve ser um texto." });
+    }
+
     try {
       const numericId = parseInt(id, 10);
+      const finalAmount = Number(amount || valor || 0);
+
+      if (!Number.isFinite(finalAmount) || finalAmount < 0) {
+        return res.status(400).json({ error: "O valor deve ser um número maior ou igual a zero." });
+      }
 
       // 1. Busca os arquivos atuais salvos no banco ANTES da atualização
       const currentTxResult = await pool.query(
@@ -477,7 +574,6 @@ router
       const finalDueDate = due_date || dataVencimento;
       const finalSupplier = supplier || fornecedor;
       const finalCategory = category || categoria;
-      const finalAmount = Number(amount || valor || 0);
 
       const result = await pool.query(
         `
@@ -491,8 +587,9 @@ router
           nfe_url = $6,
           xml_url = $7,
           boleto_url = $8, 
-          receipt_url = $9
-        WHERE id = $10
+          receipt_url = $9,
+          descricao = CASE WHEN $10 THEN $11 ELSE descricao END
+        WHERE id = $12
         RETURNING *;
         `, 
         [
@@ -505,6 +602,8 @@ router
           finalXmlUrl, 
           finalBoletoUrl, 
           finalReceiptUrl, 
+          descricao !== undefined,
+          descricao ?? null,
           numericId
         ]
       );

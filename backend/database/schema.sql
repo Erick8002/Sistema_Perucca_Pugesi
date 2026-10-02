@@ -21,6 +21,7 @@ create table if not exists public.transactions (
   category_id bigint references public.categories(id) on delete set null,
   due_date date not null,
   supplier text,
+  descricao text,
   amount numeric(14, 2) not null default 0,
   status text not null default 'Pendente',
   current_installment integer not null default 1,
@@ -46,6 +47,10 @@ create table if not exists public.transactions (
       and current_installment <= total_installment
     )
 );
+
+-- Atualiza bancos existentes sem afetar instalações que já possuem a coluna.
+alter table public.transactions
+  add column if not exists descricao text;
 
 -- 4. Criação dos Índices
 create index if not exists transactions_account_id_idx on public.transactions(account_id);

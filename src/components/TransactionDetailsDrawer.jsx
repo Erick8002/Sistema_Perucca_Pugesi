@@ -152,6 +152,12 @@ export function TransactionDetailsDrawer({
                 </p>
               </div>
             </div>
+            <div className="rounded-xl border border-slate-100/80 p-3">
+              <p className="text-xs text-slate-400">Descrição</p>
+              <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-800">
+                {transaction.descricao || "Sem descrição"}
+              </p>
+            </div>
           </div>
         </div>
       </aside>
