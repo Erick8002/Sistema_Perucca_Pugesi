@@ -27,6 +27,7 @@ export default function TransactionsTable({
   statusOptions,
   monthOptions,
   onPageDataChange,
+  onFilteredDataChange,
   selectedAccount,
   categories,
   setCategories,
@@ -398,6 +399,17 @@ export default function TransactionsTable({
     if (!a?.vencimento || !b?.vencimento) return 0;
     return a.vencimento.localeCompare(b.vencimento);
   });
+
+  const previousReportDataRef = useRef("");
+  useEffect(() => {
+    if (!onFilteredDataChange) return;
+
+    const serializedReportData = JSON.stringify(sortedTransactions);
+    if (serializedReportData !== previousReportDataRef.current) {
+      previousReportDataRef.current = serializedReportData;
+      onFilteredDataChange(sortedTransactions);
+    }
+  }, [sortedTransactions, onFilteredDataChange]);
 
   const getTransactionStatus = (item) => {
     if (!item) return "Pendente";

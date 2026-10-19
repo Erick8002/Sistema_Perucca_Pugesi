@@ -170,6 +170,7 @@ export default function App() {
   const [endDate, setEndDate] = useState("");
   const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
   const [pageTransactions, setPageTransactions] = useState([]);
+  const [reportTransactions, setReportTransactions] = useState([]);
   const filteredTransactions = accountTransactions.filter((transaction) => {
     if (!transaction) return false;
 
@@ -362,6 +363,7 @@ export default function App() {
             statusOptions={statusOptions}
             monthOptions={monthOptions}
             onPageDataChange={setPageTransactions}
+            onFilteredDataChange={setReportTransactions}
             selectedAccount={selectedAccount}
             categories={categories}
             setCategories={setCategories}
@@ -372,7 +374,10 @@ export default function App() {
             newCategoryName={newCategoryName}
             setNewCategoryName={setNewCategoryName}
           />
-          <RelatoryButtons />
+          <RelatoryButtons
+            transactions={reportTransactions}
+            selectedAccount={selectedAccount}
+          />
           <PastelCards transactions={filteredTransactions} />
           <ChartsSection transactions={filteredTransactions} />
         </div>
