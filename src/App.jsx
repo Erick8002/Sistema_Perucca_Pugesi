@@ -25,6 +25,7 @@ const monthOptions = [
 ];
 
 const parseCurrency = (valueString) => {
+
   if (!valueString) return 0;
   const normalizedValue = String(valueString)
     .replace("R$", "")
@@ -65,10 +66,25 @@ export default function App() {
       .map((transaction) => transaction.status)
       .filter(Boolean)
     ),
-    "Atrasado"
+        "Atrasado"
   ];
 
+  const yearOptions = [
+    "Todos os Anos",
+    ...new Set([
+      new Date().getFullYear().toString(),
+      ...accountTransactions
+        .map((t) => t.vencimento?.split("-")[0])
+        .filter(Boolean)
+    ])
+  ].sort((a, b) => {
+    if (a === "Todos os Anos") return -1;
+    if (b === "Todos os Anos") return 1;
+    return b - a;
+  });
+
   useEffect(() => {
+
     async function loadAccounts() {
       try {
         const response = await fetch("http://localhost:3001/api/accounts");
@@ -145,9 +161,10 @@ export default function App() {
     loadTransactions();
   }, []);
 
-  const [categoryTableHeader, setCategoryTableHeader] = useState(
+    const [categoryTableHeader, setCategoryTableHeader] = useState(
     categoryOptions[0],
   );
+  const [yearTableFilter, setYearTableFilter] = useState(new Date().getFullYear().toString());
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
@@ -163,7 +180,16 @@ export default function App() {
 
     if (!category) return false;
 
+    if (yearTableFilter && yearTableFilter !== "Todos os Anos") {
+      if (!transaction.vencimento) return false;
+      const transactionYear = transaction.vencimento.split("-")[0];
+      if (transactionYear !== yearTableFilter) {
+        return false;
+      }
+    }
+
     if (monthTableFilter && monthTableFilter != monthOptions[0]) {
+
       if (!transaction.vencimento) return false;
 
       const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
@@ -325,6 +351,9 @@ export default function App() {
             setCategoryTableHeader={setCategoryTableHeader}
             monthTableFilter={monthTableFilter}
             setMonthTableFilter={setMonthTableFilter}
+            yearTableFilter={yearTableFilter}
+            setYearTableFilter={setYearTableFilter}
+            yearOptions={yearOptions}
             startDate={startDate}
             setStartDate={setStartDate}
             endDate={endDate}

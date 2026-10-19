@@ -16,6 +16,9 @@ export default function TransactionsTable({
   setCategoryTableHeader,
   monthTableFilter,
   setMonthTableFilter,
+  yearTableFilter,
+  setYearTableFilter,
+  yearOptions,
   startDate,
   setStartDate,
   endDate,
@@ -201,11 +204,18 @@ export default function TransactionsTable({
     }
   };
 
-  const handleMonthSelect = (selectedMonth) => {
+    const handleMonthSelect = (selectedMonth) => {
     setMonthTableFilter(selectedMonth);
     setStartDate("");
     setEndDate("");
   };
+
+  const handleYearSelect = (selectedYear) => {
+    setYearTableFilter(selectedYear);
+    setStartDate("");
+    setEndDate("");
+  };
+
 
   const handleStartDateChange = (e) => {
     setStartDate(e.target.value);
@@ -519,12 +529,20 @@ export default function TransactionsTable({
         <div className="flex flex-col items-stretch gap-3 text-xs text-gray-500 sm:flex-row sm:items-center">
           <div className="p-2">
             <CustomSelect
+              options={yearOptions}
+              selected={yearTableFilter}
+              onSelect={handleYearSelect}
+            />
+          </div>
+          <div className="p-2">
+            <CustomSelect
               options={monthOptions}
               selected={monthTableFilter}
               onSelect={handleMonthSelect}
               currentOption={currentMonthIndex}
             />
           </div>
+
           <div className="flex items-center gap-2">
             <div className="flex flex-wrap items-center gap-2">
               <DateInput
@@ -539,13 +557,14 @@ export default function TransactionsTable({
               />
             </div>
 
-            {(startDate || endDate || monthTableFilter !== monthOptions[0] || searchTerm) && (
+            {(startDate || endDate || monthTableFilter !== monthOptions[0] || yearTableFilter !== "Todos os Anos" || searchTerm) && (
               <button
                 type="button"
                 onClick={() => {
                   setStartDate("");
                   setEndDate("");
                   setMonthTableFilter(monthOptions[0]);
+                  setYearTableFilter(new Date().getFullYear().toString());
                   setSearchTerm("");
                 }}
                 className="text-xs font-medium text-gray-500 hover:text-purple-600 transition-colors underline cursor-pointer"
