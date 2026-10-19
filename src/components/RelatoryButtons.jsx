@@ -1,5 +1,5 @@
-import React from 'react';
-import { Download, Printer, Send } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { Download, FileSpreadsheet, FileText, Printer, Send } from 'lucide-react';
 
 const columns = [
   { key: 'conta', label: 'Conta' },
@@ -61,14 +61,132 @@ const toCsvCell = (value) => {
   return `"${safeText.replace(/"/g, '""')}"`;
 };
 
+const escapeXml = (value) =>
+  String(value ?? '').replace(/[<>&'"]/g, (character) => ({
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+    "'": '&apos;',
+    '"': '&quot;',
+  })[character]);
+
+const safePdfText = (value) =>
+  String(value ?? '').replace(
+    /[^\u0000-\u00FF\u2013\u2014\u2018\u2019\u201C\u201D\u2022\u20AC]/g,
+    '?',
+  );
+
+const getFileBaseName = (accountName) => {
+  const safeAccountName = accountName
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+    .toLowerCase();
+
+  return `relatorio-${safeAccountName || 'conta'}-${new Date().toISOString().slice(0, 10)}`;
+};
+
+const downloadFile = (content, mimeType, fileName) => {
+  const file = new Blob([content], { type: mimeType });
+  const fileUrl = URL.createObjectURL(file);
+  const link = document.createElement('a');
+  link.href = fileUrl;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
+};
+
+const createExcelXml = (transactions, selectedAccount, total) => {
+  const cell = (value, type = 'String', style = '') =>
+    `<Cell${style ? ` ss:StyleID="${style}"` : ''}><Data ss:Type="${type}">${escapeXml(value)}</Data></Cell>`;
+  const row = (cells) => `<Row>${cells.join('')}</Row>`;
+  const reportRows = [
+    row([cell('Relatório financeiro', 'String', 'Title')]),
+    row([cell('Conta'), cell(selectedAccount?.name || 'Não selecionada')]),
+    row([cell('Quantidade de lançamentos'), cell(transactions.length, 'Number')]),
+    row([cell('Total'), cell(total, 'Number', 'Currency')]),
+    row([]),
+    row(columns.map(({ label }) => cell(label, 'String', 'Header'))),
+    ...transactions.map((transaction) =>
+      row(columns.map(({ key }) => {
+        if (key === 'valor') {
+          return cell(parseCurrency(transaction.valor), 'Number', 'Currency');
+        }
+        return cell(getCellValue(transaction, key, selectedAccount));
+      })),
+    ),
+    row([cell('Total'), ...columns.slice(1, 5).map(() => cell('')), cell(total, 'Number', 'Currency'), cell(''), cell('')]),
+  ];
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+    <?mso-application progid="Excel.Sheet"?>
+    <Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+      xmlns:o="urn:schemas-microsoft-com:office:office"
+      xmlns:x="urn:schemas-microsoft-com:office:excel"
+      xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+      <Styles>
+        <Style ss:ID="Title"><Font ss:Bold="1" ss:Size="16"/></Style>
+        <Style ss:ID="Header"><Font ss:Bold="1" ss:Color="#FFFFFF"/><Interior ss:Color="#5F5F63" ss:Pattern="Solid"/></Style>
+        <Style ss:ID="Currency"><NumberFormat ss:Format="&quot;R$&quot; #,##0.00"/></Style>
+      </Styles>
+      <Worksheet ss:Name="Relatorio">
+        <Table>${reportRows.join('')}</Table>
+      </Worksheet>
+    </Workbook>`;
+};
+
+const wrapPdfText = (text, font, fontSize, maxWidth) => {
+  const words = safePdfText(text).split(/\s+/).filter(Boolean);
+  const lines = [];
+  let currentLine = '';
+
+  words.forEach((word) => {
+    const candidate = currentLine ? `${currentLine} ${word}` : word;
+    if (currentLine && font.widthOfTextAtSize(candidate, fontSize) > maxWidth) {
+      lines.push(currentLine);
+      currentLine = word;
+    } else {
+      currentLine = candidate;
+    }
+  });
+
+  if (currentLine) lines.push(currentLine);
+  return lines.length ? lines : [''];
+};
+
 export default function RelatoryButtons({
   transactions = [],
   selectedAccount,
 }) {
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef(null);
   const total = transactions.reduce(
     (sum, transaction) => sum + parseCurrency(transaction.valor),
     0,
   );
+
+  useEffect(() => {
+    if (!isExportMenuOpen) return undefined;
+
+    const handleOutsideClick = (event) => {
+      if (!exportMenuRef.current?.contains(event.target)) {
+        setIsExportMenuOpen(false);
+      }
+    };
+    const handleEscape = (event) => {
+      if (event.key === 'Escape') setIsExportMenuOpen(false);
+    };
+
+    document.addEventListener('mousedown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+    return () => {
+      document.removeEventListener('mousedown', handleOutsideClick);
+      document.removeEventListener('keydown', handleEscape);
+    };
+  }, [isExportMenuOpen]);
 
   const createCsv = () => [
     columns.map(({ label }) => toCsvCell(label)).join(';'),
@@ -80,26 +198,170 @@ export default function RelatoryButtons({
   ].join('\r\n');
 
   const downloadCsv = () => {
-    const csv = `\uFEFF${createCsv()}`;
-    const file = new Blob([csv], { type: 'text/csv;charset=utf-8' });
-    const fileUrl = URL.createObjectURL(file);
-    const link = document.createElement('a');
-    const accountName = selectedAccount?.name || 'conta';
-    const fileName = accountName
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9]+/g, '-')
-      .replace(/^-|-$/g, '')
-      .toLowerCase();
+    const fileName = `${getFileBaseName(selectedAccount?.name || 'conta')}.xls`;
+    downloadFile(`\uFEFF${createCsv()}`, 'text/csv;charset=utf-8', fileName);
+    return fileName;
+  };
 
-    link.href = fileUrl;
-    link.download = `relatorio-${fileName || 'conta'}-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.setTimeout(() => URL.revokeObjectURL(fileUrl), 1000);
+  const exportExcel = () => {
+    try {
+      const xml = `\uFEFF${createExcelXml(transactions, selectedAccount, total)}`;
+      downloadFile(
+        xml,
+        'application/vnd.ms-excel;charset=utf-8',
+        `${getFileBaseName(selectedAccount?.name || 'conta')}.xls`,
+      );
+      setIsExportMenuOpen(false);
+    } catch (error) {
+      console.error('Erro ao exportar relatório para Excel:', error);
+      window.alert('Não foi possível exportar o relatório para Excel.');
+    }
+  };
 
-    return link.download;
+  const exportPdf = async () => {
+    try {
+      const { PDFDocument, PageSizes, rgb, StandardFonts } = await import('pdf-lib');
+      const pdf = await PDFDocument.create();
+      pdf.setTitle('Relatório financeiro');
+      pdf.setAuthor('Sistema financeiro');
+      const regularFont = await pdf.embedFont(StandardFonts.Helvetica);
+      const boldFont = await pdf.embedFont(StandardFonts.HelveticaBold);
+      const [portraitWidth, portraitHeight] = PageSizes.A4;
+      const pageSize = [portraitHeight, portraitWidth];
+      const pageWidth = pageSize[0];
+      const margin = 32;
+      const tableWidth = pageWidth - margin * 2;
+      const columnWeights = [0.09, 0.09, 0.15, 0.21, 0.14, 0.11, 0.11, 0.10];
+      const columnWidths = columnWeights.map((weight) => tableWidth * weight);
+      const rowFontSize = 8;
+      let page;
+      let y;
+
+      const drawTableHeader = () => {
+        const headerHeight = 25;
+        page.drawRectangle({
+          x: margin,
+          y: y - headerHeight,
+          width: tableWidth,
+          height: headerHeight,
+          color: rgb(0.37, 0.37, 0.39),
+        });
+
+        let x = margin;
+        columns.forEach(({ label }, index) => {
+          page.drawText(safePdfText(label), {
+            x: x + 4,
+            y: y - 16,
+            size: rowFontSize,
+            font: boldFont,
+            color: rgb(1, 1, 1),
+            maxWidth: columnWidths[index] - 8,
+          });
+          x += columnWidths[index];
+        });
+        y -= headerHeight;
+      };
+
+      const addPage = (firstPage = false) => {
+        page = pdf.addPage(pageSize);
+        y = page.getHeight() - margin;
+        if (firstPage) {
+          page.drawText('Relatório financeiro', {
+            x: margin,
+            y,
+            size: 18,
+            font: boldFont,
+            color: rgb(0.12, 0.16, 0.22),
+          });
+          y -= 26;
+          [
+            `Conta: ${selectedAccount?.name || 'Não selecionada'}`,
+            `Lançamentos: ${transactions.length}`,
+            `Total: ${formatCurrency(total)}`,
+            `Gerado em: ${new Date().toLocaleString('pt-BR')}`,
+          ].forEach((line) => {
+            page.drawText(safePdfText(line), {
+              x: margin,
+              y,
+              size: 9,
+              font: regularFont,
+              color: rgb(0.29, 0.33, 0.39),
+            });
+            y -= 13;
+          });
+          y -= 10;
+        } else {
+          page.drawText('Relatório financeiro (continuação)', {
+            x: margin,
+            y,
+            size: 11,
+            font: boldFont,
+            color: rgb(0.12, 0.16, 0.22),
+          });
+          y -= 20;
+        }
+        drawTableHeader();
+      };
+
+      addPage(true);
+      transactions.forEach((transaction, rowIndex) => {
+        const values = columns.map(({ key }) =>
+          getCellValue(transaction, key, selectedAccount),
+        );
+        const lines = values.map((value, index) =>
+          wrapPdfText(value, regularFont, rowFontSize, columnWidths[index] - 8),
+        );
+        const rowHeight = Math.max(22, ...lines.map((cellLines) => cellLines.length * 10 + 8));
+
+        if (y - rowHeight < margin) addPage();
+
+        page.drawRectangle({
+          x: margin,
+          y: y - rowHeight,
+          width: tableWidth,
+          height: rowHeight,
+          color: rowIndex % 2 === 0 ? rgb(0.96, 0.97, 0.98) : rgb(1, 1, 1),
+          borderColor: rgb(0.85, 0.87, 0.89),
+          borderWidth: 0.4,
+        });
+
+        let x = margin;
+        lines.forEach((cellLines, columnIndex) => {
+          cellLines.forEach((line, lineIndex) => {
+            page.drawText(line, {
+              x: x + 4,
+              y: y - 13 - lineIndex * 10,
+              size: rowFontSize,
+              font: regularFont,
+              color: rgb(0.12, 0.16, 0.22),
+              maxWidth: columnWidths[columnIndex] - 8,
+            });
+          });
+          x += columnWidths[columnIndex];
+        });
+        y -= rowHeight;
+      });
+
+      if (y - 24 < margin) addPage();
+      page.drawText(`Total geral: ${formatCurrency(total)}`, {
+        x: margin,
+        y: y - 16,
+        size: 10,
+        font: boldFont,
+        color: rgb(0.12, 0.16, 0.22),
+      });
+
+      const bytes = await pdf.save();
+      downloadFile(
+        bytes,
+        'application/pdf',
+        `${getFileBaseName(selectedAccount?.name || 'conta')}.pdf`,
+      );
+      setIsExportMenuOpen(false);
+    } catch (error) {
+      console.error('Erro ao exportar relatório para PDF:', error);
+      window.alert('Não foi possível exportar o relatório para PDF.');
+    }
   };
 
   const handlePrint = () => {
@@ -156,8 +418,10 @@ export default function RelatoryButtons({
   };
 
   const handleSendToAccounting = () => {
+    // 1. Faz o download do CSV como antes
     const fileName = downloadCsv();
     const accountName = selectedAccount?.name || 'Não selecionada';
+    
     const subject = `Relatório financeiro - ${accountName}`;
     const body = [
       'Olá,',
@@ -167,21 +431,57 @@ export default function RelatoryButtons({
       `Lançamentos: ${transactions.length}`,
       `Total: ${formatCurrency(total)}`,
       '',
-      `Anexe o arquivo CSV baixado automaticamente (${fileName}) a este e-mail.`,
+      `Por favor, anexe o arquivo CSV baixado (${fileName}) a este e-mail.`,
     ].join('\n');
 
-    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    // 2. Copia o corpo do e-mail para a área de transferência automaticamente
+    navigator.clipboard.writeText(body).then(() => {
+      alert(`Relatório gerado!\n\nO texto do e-mail foi copiado para a sua área de transferência. Cole-o na mensagem para a contabilidade.`);
+    }).catch(err => {
+      console.error('Erro ao copiar texto: ', err);
+    });
+
+    // 3. Abre o Outlook Web (ou o provedor de e-mail da empresa) em uma nova aba
+    window.open('https://outlook.office.com/mail/', '_blank');
   };
 
   return (
     <div className="flex justify-end gap-3 text-xs pt-2">
-      <button
-        type="button"
-        onClick={downloadCsv}
-        className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-4 py-2 rounded-md flex items-center gap-2"
-      >
-        <Download className="w-3.5 h-3.5" /> Exportar Relatório
-      </button>
+      <div className="relative" ref={exportMenuRef}>
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={isExportMenuOpen}
+          onClick={() => setIsExportMenuOpen((isOpen) => !isOpen)}
+          className="bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium px-4 py-2 rounded-md flex items-center gap-2"
+        >
+          <Download className="w-3.5 h-3.5" /> Exportar Relatório
+        </button>
+        {isExportMenuOpen && (
+          <div
+            role="menu"
+            aria-label="Formato de exportação"
+            className="absolute right-0 z-20 mt-2 min-w-40 overflow-hidden rounded-md border border-gray-200 bg-white py-1 text-gray-700 shadow-lg"
+          >
+            <button
+              type="button"
+              role="menuitem"
+              onClick={exportPdf}
+              className="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-gray-100"
+            >
+              <FileText className="h-4 w-4 text-red-600" /> PDF
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={exportExcel}
+              className="flex w-full items-center gap-2 px-4 py-2 text-left hover:bg-gray-100"
+            >
+              <FileSpreadsheet className="h-4 w-4 text-green-700" /> Excel
+            </button>
+          </div>
+        )}
+      </div>
       <button
         type="button"
         onClick={handlePrint}
