@@ -1,19 +1,12 @@
-import { useEffect, useState } from 'react';
-import Sidebar from './components/Sidebar';
-import Header from './components/Header';
-import KpiCards from './components/KpiCards';
-import TransactionsTable from './components/TransactionsTable';
-import RelatoryButtons from './components/RelatoryButtons';
-import PastelCards from './components/PastelCards';
-import ChartsSection from './components/ChartsSection';
-
-const categoryOptions = [
-  "Todas as Categorias",
-  "Fertilizantes",
-  "Defensivos",
-  "Sementes",
-  "Funcionarios",
-];
+import { useEffect, useState } from "react";
+import Sidebar from "./components/Sidebar";
+import Header from "./components/Header";
+import KpiCards from "./components/KpiCards";
+import TransactionsTable from "./components/TransactionsTable";
+import RelatoryButtons from "./components/RelatoryButtons";
+import PastelCards from "./components/PastelCards";
+import ChartsSection from "./components/ChartsSection";
+import { data } from "autoprefixer";
 
 const monthOptions = [
   "Selecione o mês",
@@ -31,52 +24,13 @@ const monthOptions = [
   "Dezembro",
 ];
 
-const initialTransactions = [
-  {
-    id: 1,
-    vencimento: "2026-09-08",
-    fornecedor: "Agrofértil Insumos",
-    categoria: "Fertilizantes",
-    valor: "4.500,00",
-    status: "Pago",
-  },
-  {
-    id: 2,
-    vencimento: "2026-09-10",
-    fornecedor: "MaqCampo Peças e Manutenção",
-    categoria: "Defensivos",
-    valor: "1.580,00",
-    status: "Pendente",
-  },
-  {
-    id: 3,
-    vencimento: "2026-09-17",
-    fornecedor: "Sementes AgroTech",
-    categoria: "Sementes",
-    valor: "2.300,00",
-    status: "Pendente",
-  },
-  { 
-    id: 4,
-    vencimento: "2026-07-17",
-    fornecedor: "Fertilizantes AgroTech",
-    categoria: "Fertilizantes",
-    valor: "2.000,00",
-    status: "Pago",
-  },
-  {
-    id: 5,
-    vencimento: "2026-09-30",
-    fornecedor: "Agrohara",
-    categoria: "Sementes",
-    valor: "3.250,00",
-    status: "Pendente",
-  }
-];
-
 const parseCurrency = (valueString) => {
-  if(!valueString) return 0;
-  const normalizedValue = String(valueString).replace("R$", "").replace(/\s/g, "").trim();
+
+  if (!valueString) return 0;
+  const normalizedValue = String(valueString)
+    .replace("R$", "")
+    .replace(/\s/g, "")
+    .trim();
   const numericString = normalizedValue.includes(",")
     ? normalizedValue.replace(/\./g, "").replace(",", ".")
     : normalizedValue;
@@ -85,45 +39,165 @@ const parseCurrency = (valueString) => {
 
 export default function App() {
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
+  const [accounts, setAccounts] = useState([]);
+  const [selectedAccount, setSelectedAccount] = useState(() => {
+    const savedAccount = localStorage.getItem('@finance:selectedAccount');
+    return savedAccount ? JSON.parse(savedAccount) : null;
+  });
+  const [transactions, setTransactions] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
+  const [categoria, setCategoria] = useState('Selecione');
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const accountTransactions = transactions.filter(
+    (transaction) => transaction.accountId === selectedAccount?.id,
+  );
 
-  const [transactions, setTransactions] = useState(() => {
-    try {
-      const savedData = localStorage.getItem('@finance:transactions');
-      if(savedData && savedData !== 'undefined' && savedData !== 'null') {
-        return JSON.parse(savedData);
-      }
-    } catch (error) {
-      console.error('Erro ao ler do localStorage: ', error);
-    }
-    return initialTransactions;
+  const categoryOptions = [
+    "Todas as Categorias",
+    ...new Set(categories
+      .map((categories) => categories)
+      .filter(Boolean)
+    )
+  ];
+
+  const statusOptions = [
+    ...new Set(transactions
+      .map((transaction) => transaction.status)
+      .filter(Boolean)
+    ),
+        "Atrasado"
+  ];
+
+  const yearOptions = [
+    "Todos os Anos",
+    ...new Set([
+      new Date().getFullYear().toString(),
+      ...accountTransactions
+        .map((t) => t.vencimento?.split("-")[0])
+        .filter(Boolean)
+    ])
+  ].sort((a, b) => {
+    if (a === "Todos os Anos") return -1;
+    if (b === "Todos os Anos") return 1;
+    return b - a;
   });
 
   useEffect(() => {
-    localStorage.setItem('@finance:transactions', JSON.stringify(transactions));
-  }, [transactions]);
 
-  const [categoryTableHeader, setCategoryTableHeader] = useState(categoryOptions[0]);
+    async function loadAccounts() {
+      try {
+        const response = await fetch("http://localhost:3001/api/accounts");
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar as contas");
+        }
+
+        const accountData = await response.json();
+        setAccounts(accountData);
+
+        if (accountData.length > 0) {
+          // 1. Tenta buscar a conta salva no localStorage
+          const savedAccount = localStorage.getItem("@finance:selectedAccount");
+          
+          if (savedAccount) {
+            const parsedAccount = JSON.parse(savedAccount);
+            // 2. Procura a conta salva na lista vinda do banco (pelo ID)
+            const foundAccount = accountData.find((acc) => acc.id === parsedAccount.id);
+
+            if (foundAccount) {
+              setSelectedAccount(foundAccount);
+              return;
+            }
+          }
+
+          // 3. Fallback: se não tiver nada salvo (ou ID não existir), usa a primeira conta
+          setSelectedAccount(accountData[0]);
+          localStorage.setItem("@finance:selectedAccount", JSON.stringify(accountData[0]));
+        }
+      } catch (error) {
+        console.error("Erro ao carregar contas:", error.message);
+      }
+    }
+
+    loadAccounts();
+  }, []);
+
+  useEffect(() => {
+    async function loadTransactions() {
+      try {
+        const response = await fetch("http://localhost:3001/api/transactions");
+
+        if (!response.ok) {
+          throw new Error("Não foi possível carregar as transações");
+        }
+
+        const transactionData = await response.json();
+
+        const formattedTransactions = transactionData.map((t) => ({
+          id: t.id,
+          accountId: t.account_id,
+          vencimento: t.data_vencimento?.slice(0, 10),
+          fornecedor: t.fornecedor,
+          descricao: t.descricao,
+          categoria: t.categoria,
+          valor: t.valor,
+          status: t.status,
+          current_installment: t.current_installment,
+          total_installment: t.total_installment,
+          group_id: t.group_id,
+          nfe_url: t.nfe_url,
+          xml_url: t.xml_url,
+          boleto_url: t.boleto_url,
+          receipt_url: t.receipt_url,
+        }));
+        console.log("Transações formatadas: ", formattedTransactions)
+        setTransactions(formattedTransactions);
+      } catch (error) {
+        console.error("Erro ao carregar transações: ", error.message);
+      }
+    }
+
+    loadTransactions();
+  }, []);
+
+    const [categoryTableHeader, setCategoryTableHeader] = useState(
+    categoryOptions[0],
+  );
+  const [yearTableFilter, setYearTableFilter] = useState(new Date().getFullYear().toString());
   const [monthTableFilter, setMonthTableFilter] = useState(currentMonthIndex);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-
   const [selectedCardStatus, setSelectedCardStatus] = useState("Todos");
-  const [pageTransactions, setPageTransactions] = useState(() => initialTransactions);
-
-  const filteredTransactions = transactions.filter((transaction) => {
+  const [pageTransactions, setPageTransactions] = useState([]);
+  const [reportTransactions, setReportTransactions] = useState([]);
+  const filteredTransactions = accountTransactions.filter((transaction) => {
     if (!transaction) return false;
 
-    const category = categoryTableHeader === "Todas as Categorias" || transaction.categoria?.includes(categoryTableHeader);
+    const category =
+      categoryTableHeader === "Todas as Categorias" ||
+      transaction.categoria?.includes(categoryTableHeader);
     // console.log("Existe categoria? " + category);
 
     if (!category) return false;
 
-    if(monthTableFilter && monthTableFilter != monthOptions[0]) {
+    if (yearTableFilter && yearTableFilter !== "Todos os Anos") {
+      if (!transaction.vencimento) return false;
+      const transactionYear = transaction.vencimento.split("-")[0];
+      if (transactionYear !== yearTableFilter) {
+        return false;
+      }
+    }
+
+    if (monthTableFilter && monthTableFilter != monthOptions[0]) {
+
+      if (!transaction.vencimento) return false;
+
       const selectedMonthNumber = monthOptions.indexOf(monthTableFilter);
       const monthString = transaction.vencimento.split("-")[1];
       const transactionMonthIndex = parseInt(monthString, 10);
 
-      if(transactionMonthIndex !== selectedMonthNumber) {
+      if (transactionMonthIndex !== selectedMonthNumber) {
         return false;
       }
     }
@@ -136,29 +210,117 @@ export default function App() {
       return false;
     }
 
-    if(selectedCardStatus !== "Todos" && transaction.status !== selectedCardStatus){
+    if (
+      selectedCardStatus !== "Todos" &&
+      transaction.status !== selectedCardStatus
+    ) {
       return false;
     }
 
     return true;
   });
 
-  const totalExpenses = filteredTransactions.reduce((acc, item) => acc + parseCurrency(item.valor), 0);
+  const totalExpenses = filteredTransactions.reduce(
+    (acc, item) => acc + parseCurrency(item.valor),
+    0,
+  );
   const expensesCount = filteredTransactions.length;
 
-  const paidTransactions = filteredTransactions.filter((item) => item.status === "Pago");
+  const paidTransactions = filteredTransactions.filter(
+    (item) => item.status === "Pago",
+  );
   const totalPaid = paidTransactions.reduce(
     (acc, item) => acc + parseCurrency(item.valor),
-    0
+    0,
   );
   const paidCount = paidTransactions.length;
 
-  const pendingTransactions = filteredTransactions.filter((item) => item.status === "Pendente");
+  const pendingTransactions = filteredTransactions.filter(
+    (item) => item.status === "Pendente",
+  );
   const totalPending = pendingTransactions.reduce(
     (acc, item) => acc + parseCurrency(item.valor),
-    0
+    0,
   );
   const pendingCount = pendingTransactions.length;
+
+  const handleAccountSelect = (account) => {
+    setSelectedAccount(account);
+    if (account) {
+      localStorage.setItem("@finance:selectedAccount", JSON.stringify(account));
+    }
+  };
+
+  const handleDeleteCategory = async (e, categoryToDelete) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if(!window.confirm(`Tem certeza que deseja excluir a categoria "${categoryToDelete}"`)) {
+        return;
+      }
+
+      try {
+        const encodedName = encodeURIComponent(categoryToDelete);
+        const response = await fetch(`http://localhost:3001/api/transactions/categories/${encodedName}`, {
+          method: "DELETE"
+        });
+
+        if(!response.ok) {
+          const errorData = await response.json().catch(() => (({})));
+          throw new Error(errorData.error || "Erro ao excluir categoria.");
+        }
+
+        setCategories((prev) => {
+          const updatedCategories = prev.filter((cat) => {
+            const name = typeof cat === 'object' ? cat.name : cat;
+            return name !== categoryToDelete;
+          });
+
+          return updatedCategories;
+        });
+
+        console.log("CATEGORIA DELETAR: ", categoryToDelete);
+
+        if(categoria === categoryToDelete) {
+          setCategoria("");
+        }
+      } catch(error) {
+        console.error("Erro ao excluir categoria: ", error.message);
+        alert(error.message);
+      }
+    };
+
+    const handleCreateCategory = async (categoryName, e) => {
+      if(e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      const trimmedName = typeof categoryName === 'string' ? categoryName.trim() : "";
+      if (!trimmedName) return null;
+
+      try {
+        const response = await fetch("http://localhost:3001/api/transactions/categories", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: trimmedName }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Erro ao salvar categoria no servidor");
+        }
+
+        const createdCategory = await response.json();
+
+        setCategories((prev) => [...prev, createdCategory]);
+
+        return createdCategory  
+      } catch (error) {
+        console.error("Erro ao criar categoria:", error.message);
+        alert(error.message);
+        return null;
+      }
+    };
 
   return (
     <div className="flex min-h-screen bg-[#F4F4F6] text-gray-800 font-sans">
@@ -166,8 +328,12 @@ export default function App() {
 
       <main className="min-w-0 flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
         <div className="mx-auto max-w-6xl space-y-6">
-          <Header />
-          <KpiCards 
+          <Header
+            accounts={accounts}
+            selectedAccount={selectedAccount}
+            onAccountSelect={handleAccountSelect}
+          />
+          <KpiCards
             totalExpenses={totalExpenses}
             expensesCount={expensesCount}
             totalPaid={totalPaid}
@@ -178,25 +344,42 @@ export default function App() {
             setSelectedCardStatus={setSelectedCardStatus}
           />
 
-          <TransactionsTable 
+          <TransactionsTable
             filterTransactions={filteredTransactions}
-            transactions={transactions}
+            transactions={accountTransactions}
             setTransactions={setTransactions}
             categoryTableHeader={categoryTableHeader}
             setCategoryTableHeader={setCategoryTableHeader}
             monthTableFilter={monthTableFilter}
             setMonthTableFilter={setMonthTableFilter}
+            yearTableFilter={yearTableFilter}
+            setYearTableFilter={setYearTableFilter}
+            yearOptions={yearOptions}
             startDate={startDate}
             setStartDate={setStartDate}
             endDate={endDate}
             setEndDate={setEndDate}
             categoryOptions={categoryOptions}
+            statusOptions={statusOptions}
             monthOptions={monthOptions}
             onPageDataChange={setPageTransactions}
+            onFilteredDataChange={setReportTransactions}
+            selectedAccount={selectedAccount}
+            categories={categories}
+            setCategories={setCategories}
+            handleDeleteCategory={handleDeleteCategory}
+            isCategoryModalOpen={isCategoryModalOpen}
+            setIsCategoryModalOpen={setIsCategoryModalOpen}
+            handleCreateCategory={handleCreateCategory}
+            newCategoryName={newCategoryName}
+            setNewCategoryName={setNewCategoryName}
           />
-          <RelatoryButtons />
-          <PastelCards transactions={pageTransactions} />
-          <ChartsSection />
+          <RelatoryButtons
+            transactions={reportTransactions}
+            selectedAccount={selectedAccount}
+          />
+          <PastelCards transactions={filteredTransactions} />
+          <ChartsSection transactions={filteredTransactions} />
         </div>
       </main>
     </div>
