@@ -431,7 +431,6 @@ export default function RelatoryButtons({
       `Lançamentos: ${transactions.length}`,
       `Total: ${formatCurrency(total)}`,
       '',
-      `Por favor, anexe o arquivo CSV baixado (${fileName}) a este e-mail.`,
     ].join('\n');
 
     // 2. Copia o corpo do e-mail para a área de transferência automaticamente
