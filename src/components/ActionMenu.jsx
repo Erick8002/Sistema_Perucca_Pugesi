@@ -78,18 +78,6 @@ export function ActionMenu({ item, onDelete, onEdit }) {
           className="fixed z-[100] w-44 rounded-lg border border-gray-200 bg-white py-1 text-left text-xs shadow-lg"
         >
           <button 
-            onClick={() => setIsOpen(false)}
-            className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-          >
-            <FileText className="w-3.5 h-3.5" /> Ver / Baixar Boleto
-          </button>
-          <button 
-            onClick={() => setIsOpen(false)}
-            className="w-full px-3 py-2 hover:bg-gray-50 flex items-center gap-2 text-gray-700"
-          >
-            <Printer className="w-3.5 h-3.5" /> Imprimir Comprovante
-          </button>
-          <button 
             onClick={() => {
               setIsOpen(false);
               onEdit(item);
