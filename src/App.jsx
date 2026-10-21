@@ -220,13 +220,13 @@ export default function App() {
     return true;
   });
 
-  const totalExpenses = filteredTransactions.reduce(
+  const totalExpenses = reportTransactions.reduce(
     (acc, item) => acc + parseCurrency(item.valor),
     0,
   );
-  const expensesCount = filteredTransactions.length;
+  const expensesCount = reportTransactions.length;
 
-  const paidTransactions = filteredTransactions.filter(
+  const paidTransactions = reportTransactions.filter(
     (item) => item.status === "Pago",
   );
   const totalPaid = paidTransactions.reduce(
@@ -235,7 +235,7 @@ export default function App() {
   );
   const paidCount = paidTransactions.length;
 
-  const pendingTransactions = filteredTransactions.filter(
+  const pendingTransactions = reportTransactions.filter(
     (item) => item.status === "Pendente",
   );
   const totalPending = pendingTransactions.reduce(
