@@ -535,6 +535,7 @@ export default function TransactionsTable({
               handleCreateCategory={handleCreateCategory}
               newCategoryName={newCategoryName}
               setNewCategoryName={setNewCategoryName}
+              api_url={api_url}
             />
           </div>
         </div>
