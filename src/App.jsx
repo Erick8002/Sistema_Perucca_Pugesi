@@ -52,6 +52,7 @@ export default function App() {
   const accountTransactions = transactions.filter(
     (transaction) => transaction.accountId === selectedAccount?.id,
   );
+  const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
   const categoryOptions = [
     "Todas as Categorias",
@@ -87,7 +88,7 @@ export default function App() {
 
     async function loadAccounts() {
       try {
-        const response = await fetch("http://localhost:3001/api/accounts");
+        const response = await fetch(`${API_URL}/api/accounts`);
 
         if (!response.ok) {
           throw new Error("Não foi possível carregar as contas");
@@ -126,7 +127,7 @@ export default function App() {
   useEffect(() => {
     async function loadTransactions() {
       try {
-        const response = await fetch("http://localhost:3001/api/transactions");
+        const response = await fetch(`${API_URL}/api/transactions`);
 
         if (!response.ok) {
           throw new Error("Não foi possível carregar as transações");
@@ -260,7 +261,7 @@ export default function App() {
 
       try {
         const encodedName = encodeURIComponent(categoryToDelete);
-        const response = await fetch(`http://localhost:3001/api/transactions/categories/${encodedName}`, {
+        const response = await fetch(`${API_URL}/api/transactions/categories/${encodedName}`, {
           method: "DELETE"
         });
 
@@ -299,7 +300,7 @@ export default function App() {
       if (!trimmedName) return null;
 
       try {
-        const response = await fetch("http://localhost:3001/api/transactions/categories", {
+        const response = await fetch(`${API_URL}/api/transactions/categories`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: trimmedName }),
@@ -373,6 +374,7 @@ export default function App() {
             handleCreateCategory={handleCreateCategory}
             newCategoryName={newCategoryName}
             setNewCategoryName={setNewCategoryName}
+            api_url={API_URL}
           />
           <RelatoryButtons
             transactions={reportTransactions}

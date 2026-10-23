@@ -25,7 +25,7 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory, isCategoryModalOpen, setIsCategoryModalOpen, handleCreateCategory, newCategoryName, setNewCategoryName }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory, isCategoryModalOpen, setIsCategoryModalOpen, handleCreateCategory, newCategoryName, setNewCategoryName, api_url }) {
     const selectRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
@@ -68,7 +68,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     useEffect(() => {
       async function loadCategories() {
         try{
-          const response = await fetch("http://localhost:3001/api/transactions/categories");
+          const response = await fetch(`${api_url}/api/transactions/categories`);
           if(response.ok) {
             const data = await response.json();
             setCategories(data);

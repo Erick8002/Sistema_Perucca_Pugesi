@@ -36,7 +36,8 @@ export default function TransactionsTable({
   setIsCategoryModalOpen,
   handleCreateCategory,
   newCategoryName,
-  setNewCategoryName
+  setNewCategoryName,
+  api_url
 }) {
   const [currentPage, setCurrentPage] = useState(1); // Pega a página atual
   const [itemsPerPage, setItemsPerPage] = useState(10); // Pega a quantidade de items por página que o usuário quer
@@ -59,8 +60,8 @@ export default function TransactionsTable({
 
     console.log("isEditing: " ,isEditing);
     const url = isEditing
-      ? `http://localhost:3001/api/transactions/${editingTransaction.id}`
-      : "http://localhost:3001/api/transactions/";
+      ? `${api_url}api/transactions/${editingTransaction.id}`
+      : `${api_url}/api/transactions/`;
 
     const method = isEditing ? "PUT" : "POST";
     const rawDate = newTransaction.vencimento || newTransaction.dueDate;
@@ -188,7 +189,7 @@ export default function TransactionsTable({
   const handleDeleteTransaction = async (idToDelete) => {
     try {
       const response = await fetch(
-        `http://localhost:3001/api/transactions/${idToDelete}`,
+        `${api_url}/api/transactions/${idToDelete}`,
         {
           method: "DELETE",
         },
@@ -239,7 +240,7 @@ export default function TransactionsTable({
 
     try {
       const response = await fetch(
-        `http://localhost:3001/api/transactions/${transaction.id}`,
+        `${api_url}/api/transactions/${transaction.id}`,
         {
           method: "PATCH",
           headers: {
