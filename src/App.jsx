@@ -271,6 +271,39 @@ export default function App() {
     handleAccountSelect(createdAccount);
   };
 
+  const handleDeleteAccount = async (e, accountToDelete) => {
+    e.stopPropagation();
+    e.preventDefault();
+
+    if (!window.confirm(`Tem certeza que deseja excluir a conta "${accountToDelete.name}"?`)) {
+      return;
+    }
+
+    try {
+      const id = accountToDelete.id;
+      const response = await fetch(`${API_URL}/api/accounts/${id}`, {
+        method: "DELETE",
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Erro ao excluir conta");
+      }
+      
+      // Filtra a lista usando o ID da conta
+      setAccounts((prev) => prev.filter((acc) => acc.id !== id));
+
+      // Limpa o select selecionado se for a conta que acabou de ser apagada
+      if (selectedAccount && selectedAccount.id === id) {
+        setSelectedAccount(accounts.id === 1);
+      }
+
+    } catch (error) {
+      console.error("Erro ao excluir conta: ", error.message);
+      alert(error.message);
+    }
+  };
+
   const handleDeleteCategory = async (e, categoryToDelete) => {
       e.stopPropagation();
       e.preventDefault();
@@ -353,6 +386,7 @@ export default function App() {
             selectedAccount={selectedAccount}
             onAccountSelect={handleAccountSelect}
             onAddAccount={() => setIsAddAccountModalOpen(true)}
+            handleDeleteAccount={handleDeleteAccount}
           />
           <KpiCards
             totalExpenses={totalExpenses}

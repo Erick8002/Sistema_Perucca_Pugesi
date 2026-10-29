@@ -47,4 +47,25 @@ router.post('/', async (req, res) => {
     }
 });
 
+router.delete("/:id", async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        if(!id) {
+            return res.status(400).json({ error: "O id da conta é obrigatório" });
+        }
+
+        const result = await pool.query(`DELETE FROM accounts WHERE id = $1 RETURNING *`, [id]);
+
+        if(result.rowCount === 0) {
+            return res.status(400).json({ error: "Conta não encontrada na tabela" });
+        }
+
+        return res.status(200).json({ message: "Conta exclúida com sucesso" });
+    } catch (error) {
+        console.error("Erro ao excluir conta: ", error.message);
+        return res.status(500).json({ error: "Erro ao excluir conta" })
+    }
+});
+
 export default router;

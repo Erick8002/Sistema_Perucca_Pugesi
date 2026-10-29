@@ -7,6 +7,7 @@ export default function Header({
   selectedAccount,
   onAccountSelect,
   onAddAccount,
+  handleDeleteAccount,
 }) {
   const accountOptions = accounts.map((account) => account.name);
   const selectedName = selectedAccount?.name || 'Nenhuma conta encontrada';
@@ -34,6 +35,7 @@ export default function Header({
                 const account = accounts.find((item) => item.name === name);
                 onAccountSelect(account);
               }}
+              onDelete={handleDeleteAccount}
             />
           </div>
         </div>
