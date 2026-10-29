@@ -504,7 +504,7 @@ export default function TransactionsTable({
                 onSelect={setCategoryTableHeader}
                 onAddNew={() => setIsCategoryModalOpen(true)}
                 addNewLabel="Nova Categoria"
-                onDeleteCategory={handleDeleteCategory}
+                onDelete={handleDeleteCategory}
               />
             </div>
 

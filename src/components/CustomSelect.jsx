@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Plus, X } from "lucide-react";
 
-export default function CustomSelect({ options = [], selected, onSelect, currentOption, onAddNew, addNewLabel = "Nova Opção", onDeleteCategory }) {
+export default function CustomSelect({ options = [], selected, onSelect, currentOption, onAddNew, addNewLabel = "Nova Opção", onDelete }) {
   const [isOpen, setIsOpen] = useState(false);
   const isSelectedCurrent = selected === currentOption;
   const selectRef = useRef(null);
@@ -88,13 +88,13 @@ export default function CustomSelect({ options = [], selected, onSelect, current
                   )}
 
                   {/* Botão X para Excluir (Aparece apenas no hover graças a 'group-hover:flex') */}
-                  {onDeleteCategory && (<span
+                  {onDelete && (<span
                     role="button"
                     tabIndex={0}
                     title="Excluir categoria"
                     onClick={(e) => {
                       e.stopPropagation(); // Impede a seleção do item ao clicar no X
-                      onDeleteCategory(e, option); // Função de exclusão vinda das props
+                      onDelete(e, option); // Função de exclusão vinda das props
                     }}
                     className="hidden group-hover:flex items-center justify-center w-5 h-5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                   >

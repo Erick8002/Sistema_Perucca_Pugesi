@@ -405,7 +405,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                     onSelect={setCategoria}
                     onAddNew={() => setIsCategoryModalOpen(true)}
                     addNewLabel="Nova Categoria"
-                    onDeleteCategory={handleDeleteCategory}
+                    onDelete={handleDeleteCategory}
                 />
               </div>
 

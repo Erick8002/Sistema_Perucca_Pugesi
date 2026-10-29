@@ -1,8 +1,13 @@
 import React from 'react';
-import { Landmark } from 'lucide-react';
+import { Landmark, Plus } from 'lucide-react';
 import CustomSelect from './CustomSelect';
 
-export default function Header({ accounts = [], selectedAccount, onAccountSelect }) {
+export default function Header({
+  accounts = [],
+  selectedAccount,
+  onAccountSelect,
+  onAddAccount,
+}) {
   const accountOptions = accounts.map((account) => account.name);
   const selectedName = selectedAccount?.name || 'Nenhuma conta encontrada';
 
@@ -17,19 +22,28 @@ export default function Header({ accounts = [], selectedAccount, onAccountSelect
         </p>
       </div>
 
-      <div className="flex flex-col items-start text-xs sm:items-end">
-        <span className="text-gray-400 mb-1">Conta Selecionada:</span>
-        <div className="flex items-center gap-2">
-          <Landmark className="h-4 w-4 text-gray-500" />
-          <CustomSelect
-            options={accountOptions}
-            selected={selectedName}
-            onSelect={(name) => {
-              const account = accounts.find((item) => item.name === name);
-              onAccountSelect(account);
-            }}
-          />
+      <div className="flex flex-col items-start gap-3 text-xs sm:items-end">
+        <div>
+          <span className="mb-1 block text-gray-400">Conta Selecionada:</span>
+          <div className="flex items-center gap-2">
+            <Landmark className="h-4 w-4 text-gray-500" />
+            <CustomSelect
+              options={accountOptions}
+              selected={selectedName}
+              onSelect={(name) => {
+                const account = accounts.find((item) => item.name === name);
+                onAccountSelect(account);
+              }}
+            />
+          </div>
         </div>
+        <button
+          type="button"
+          onClick={onAddAccount}
+          className='text-purple-900 hover:underline'
+        >
+            Adicionar Conta
+        </button>
       </div>
     </div>
   );

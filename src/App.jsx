@@ -6,6 +6,7 @@ import TransactionsTable from "./components/TransactionsTable";
 import RelatoryButtons from "./components/RelatoryButtons";
 import PastelCards from "./components/PastelCards";
 import ChartsSection from "./components/ChartsSection";
+import AddAccountModal from "./components/AddAccountModal";
 import { data } from "autoprefixer";
 
 const monthOptions = [
@@ -40,6 +41,7 @@ const parseCurrency = (valueString) => {
 export default function App() {
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
   const [accounts, setAccounts] = useState([]);
+  const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(() => {
     const savedAccount = localStorage.getItem('@finance:selectedAccount');
     return savedAccount ? JSON.parse(savedAccount) : null;
@@ -252,6 +254,23 @@ export default function App() {
     }
   };
 
+  const handleCreateAccount = async (accountData) => {
+    const response = await fetch(`${API_URL}/api/accounts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(accountData),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || "Não foi possível salvar a conta.");
+    }
+
+    const createdAccount = await response.json();
+    setAccounts((previousAccounts) => [...previousAccounts, createdAccount]);
+    handleAccountSelect(createdAccount);
+  };
+
   const handleDeleteCategory = async (e, categoryToDelete) => {
       e.stopPropagation();
       e.preventDefault();
@@ -333,6 +352,7 @@ export default function App() {
             accounts={accounts}
             selectedAccount={selectedAccount}
             onAccountSelect={handleAccountSelect}
+            onAddAccount={() => setIsAddAccountModalOpen(true)}
           />
           <KpiCards
             totalExpenses={totalExpenses}
@@ -384,6 +404,11 @@ export default function App() {
           <ChartsSection transactions={filteredTransactions} />
         </div>
       </main>
+      <AddAccountModal
+        isOpen={isAddAccountModalOpen}
+        onClose={() => setIsAddAccountModalOpen(false)}
+        onSubmit={handleCreateAccount}
+      />
     </div>
   );
 }
