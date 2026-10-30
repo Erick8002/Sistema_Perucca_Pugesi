@@ -18,7 +18,6 @@ export default function AddAccountModal({
   onClose,
   onSubmit,
   documentTypes = defaultDocumentTypes,
-  handleDeleteAccount,
 }) {
   const [formData, setFormData] = useState(initialFormData);
   const [loading, setLoading] = useState(false);

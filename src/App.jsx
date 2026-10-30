@@ -271,16 +271,23 @@ export default function App() {
     handleAccountSelect(createdAccount);
   };
 
-  const handleDeleteAccount = async (e, accountToDelete) => {
+  const handleDeleteAccount = async (e, optionName) => {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!window.confirm(`Tem certeza que deseja excluir a conta "${accountToDelete.name}"?`)) {
+    if (!window.confirm(`Tem certeza que deseja excluir a conta "${optionName}"?`)) {
       return;
     }
 
     try {
+      const accountToDelete = accounts.find((acc) => acc.name === optionName);
+
+      if(!accountToDelete || !accountToDelete.id) {
+        throw new Error("Conta não encontrada ou ID inválido");
+      } 
+
       const id = accountToDelete.id;
+
       const response = await fetch(`${API_URL}/api/accounts/${id}`, {
         method: "DELETE",
       });
