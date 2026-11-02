@@ -7,6 +7,8 @@ import RelatoryButtons from "./components/RelatoryButtons";
 import PastelCards from "./components/PastelCards";
 import ChartsSection from "./components/ChartsSection";
 import AddAccountModal from "./components/AddAccountModal";
+import LoginPage from "./pages/LoginPage";
+import { AuthProvider,  useAuth } from "./contexts/AuthContext";
 import { data } from "autoprefixer";
 
 const monthOptions = [
@@ -39,6 +41,20 @@ const parseCurrency = (valueString) => {
 };
 
 export default function App() {
+  const { user, login, logout, loading } = useAuth();
+
+  if(loading) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center text-white">
+        <p>Carregando sessão...</p>
+      </div>
+    );
+  }
+
+  if(!user) {
+    return <LoginPage />;
+  }
+
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
   const [accounts, setAccounts] = useState([]);
   const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false);
