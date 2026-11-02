@@ -19,7 +19,7 @@ export default function Header({
         <button
             type="button"
             onClick={onLogout}
-            className="inline-flex items-center gap-1.5 font-medium text-gray-500 hover:text-red-600 text-sm"
+            className="inline-flex items-center gap-1.5 font-medium text-gray-500 hover:text-red-900 text-sm"
           >
             <LogOut aria-hidden="true" size={13} />
             Sair
