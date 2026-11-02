@@ -730,20 +730,34 @@ export default function TransactionsTable({
 
                           {/* XML */}
                           
-                            {item.xml_url && (<a 
-                              href={item.xml_url} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              title="Arquivo XML"
+                            {item.xml_url && (<button 
+                              type="button"
+                              title="Baixar Arquivo XML"
                               className="p-1 text-gray-500 hover:text-purple-600 hover:bg-purple-50 rounded"
-                              onClick={(e) => {
+                              onClick={async (e) => {
                                 e.stopPropagation();
+
+                                try {
+                                  const response = await fetch (item.xml_url);
+                                  const blob = await response.blob();
+
+                                  const blobUrl = window.URL.createObjectURL(blob);
+                                  const link = document.createElement('a');
+                                  link.href = blobUrl;
+                                  link.download = item.file_name_xml || 'document.xml';
+
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                  window.URL.remokeObjectURL(blobUrl);
+                                } catch(error) {
+                                  console.log("Erro ao baixar o arquivo: ", error);
+                                }
                               }}
                             >
                               <FileCode className="w-4 h-4" />
-                            </a>
+                            </button>
                           )}
-                          
 
                           {/* Boleto */}
                           
