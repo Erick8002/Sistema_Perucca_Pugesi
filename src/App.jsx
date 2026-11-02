@@ -52,7 +52,7 @@ export default function App() {
   }
 
   if(!user) {
-    return <LoginPage />;
+    return <LoginPage onLogin={login} />;
   }
 
   const currentMonthIndex = monthOptions[new Date().getMonth() + 1];
@@ -270,6 +270,19 @@ export default function App() {
     }
   };
 
+  const handleLogout = async () => {
+    try {
+      const { error } = await logout();
+
+      if (error) {
+        throw error;
+      }
+    } catch (error) {
+      console.error("Erro ao encerrar sessão:", error);
+      alert("Não foi possível sair da sua conta. Tente novamente.");
+    }
+  };
+
   const handleCreateAccount = async (accountData) => {
     const response = await fetch(`${API_URL}/api/accounts`, {
       method: "POST",
@@ -410,6 +423,7 @@ export default function App() {
             onAccountSelect={handleAccountSelect}
             onAddAccount={() => setIsAddAccountModalOpen(true)}
             handleDeleteAccount={handleDeleteAccount}
+            onLogout={handleLogout}
           />
           <KpiCards
             totalExpenses={totalExpenses}
