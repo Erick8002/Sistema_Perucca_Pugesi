@@ -28,6 +28,7 @@ export default function TransactionsTable({
   monthOptions,
   onPageDataChange,
   onFilteredDataChange,
+  accounts = [],
   selectedAccount,
   categories,
   setCategories,
@@ -536,6 +537,8 @@ export default function TransactionsTable({
               newCategoryName={newCategoryName}
               setNewCategoryName={setNewCategoryName}
               api_url={api_url}
+              selectedAccount={selectedAccount}
+              accounts={accounts}
             />
           </div>
         </div>

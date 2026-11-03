@@ -68,7 +68,7 @@ export default function App() {
   const [categoria, setCategoria] = useState('Selecione');
   const [newCategoryName, setNewCategoryName] = useState("");
   const accountTransactions = transactions.filter(
-    (transaction) => transaction.accountId === selectedAccount?.id,
+    (transaction) => transaction.accountId === selectedAccount?.id 
   );
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -456,6 +456,7 @@ export default function App() {
             monthOptions={monthOptions}
             onPageDataChange={setPageTransactions}
             onFilteredDataChange={setReportTransactions}
+            accounts={accounts}
             selectedAccount={selectedAccount}
             categories={categories}
             setCategories={setCategories}

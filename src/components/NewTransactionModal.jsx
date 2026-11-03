@@ -25,13 +25,14 @@ const parseCurrencyInput = (value) => {
     return Number(valueWithDecimalSeparator) || 0;
 };
 
-export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory, isCategoryModalOpen, setIsCategoryModalOpen, handleCreateCategory, newCategoryName, setNewCategoryName, api_url }) {
+export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory, isCategoryModalOpen, setIsCategoryModalOpen, handleCreateCategory, newCategoryName, setNewCategoryName, api_url, selectedAccount, accounts = [] }) {
     const selectRef = useRef(null);
     const inputCalendarRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
     );
     const initialFormState = {
+      account_id: selectedAccount?.id || '',
       vencimento: '',
       fornecedor: '',
       descricao: '',
@@ -45,6 +46,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [formData, setFormData] = useState(initialFormState);
     const [categoria, setCategoria] = useState('Selecione');
     const [status, setStatus] = useState('Selecione');
+    const [account, setAccount] = useState( selectedAccount?.name ||'Selecione')
     const [installment, setInstallment] = useState("1");
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -87,6 +89,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       console.log("2. Transação recebida no Modal:", editingTransaction);
       if (isEditing && editingTransaction) {
         setFormData({
+          account_id: editingTransaction.account_id || "",
           fornecedor: editingTransaction.fornecedor || "",
           descricao: editingTransaction.descricao || "",
           valor: editingTransaction.valor || "",
@@ -197,6 +200,13 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       });
 
       setAttachedFiles((prev) => [...prev, ...newFiles]);
+    };
+
+    const handleAccountChange = (selectedAccount) => {
+      setFormData((prev) => ({
+        ...prev,
+        account_id: selectedAccount.id,
+      }));
     };
     
     const handleSubmit = async (e) => {
@@ -365,6 +375,18 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
 
           {/* Formulário */}
           <form onSubmit={handleSubmit} className="mt-6 space-y-4" autoComplete='off'>
+            {/* Conta Selecionada */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700">
+                Conta Selecionada
+              </label>
+              <CustomSelect
+                 options={accounts}
+                 selected={selectedAccount.name}
+                 onSelect={setAccount}
+              />
+            </div>
+
             {/* Fornecedor / Empresa */}
             <div>
               <label className="block text-sm font-semibold text-slate-700">
