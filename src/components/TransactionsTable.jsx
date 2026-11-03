@@ -60,7 +60,7 @@ export default function TransactionsTable({
 
     console.log("isEditing: " ,isEditing);
     const url = isEditing
-      ? `${api_url}api/transactions/${editingTransaction.id}`
+      ? `${api_url}/api/transactions/${editingTransaction.id}`
       : `${api_url}/api/transactions/`;
 
     const method = isEditing ? "PUT" : "POST";
