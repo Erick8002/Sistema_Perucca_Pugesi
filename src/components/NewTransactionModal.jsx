@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import CustomSelect from './CustomSelect';
-import { X, Upload } from 'lucide-react';
+import { X, Upload, Calendar } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { createPortal } from 'react-dom';
 
@@ -27,6 +27,7 @@ const parseCurrencyInput = (value) => {
 
 export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory, isCategoryModalOpen, setIsCategoryModalOpen, handleCreateCategory, newCategoryName, setNewCategoryName, api_url }) {
     const selectRef = useRef(null);
+    const inputCalendarRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
     );
@@ -328,6 +329,16 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       }
     };
 
+    const handleCalendarClick = () => {
+      if(inputCalendarRef.current) {
+        if("showPicker" in HTMLInputElement.prototype){
+          inputCalendarRef.current.showPicker();
+        } else {
+          inputCalendarRef.current.focus();
+        }
+      }
+    };
+
     if(!isOpen) return null;
     return (
       <>
@@ -431,30 +442,26 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 <label className="block text-sm font-semibold text-slate-700">
                   Data de Vencimento
                 </label>
-                <input
-                  type="date"
-                  name="vencimento"
-                  value={formData.vencimento || ""}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-600 focus:border-purple-500 focus:bg-white focus:outline-none"
-                />
+                <div
+                  onClick={handleCalendarClick}
+                  className="relative flex w-full cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-sm shadow-sm transition-all hover:border-gray-300 focus-within:ring-2 focus-within:ring-purple-500/20"
+                >
+                  <input
+                    ref={inputCalendarRef}
+                    type="date"
+                    name="vencimento"
+                    value={formData.vencimento || ""}
+                    onChange={handleChange}
+                    className="w-full cursor-pointer bg-transparent text-gray-600 outline-none text-xs sm:text-sm [&::-webkit-calendar-picker-indicator]:hidden"
+                  />
+                  <Calendar className="pointer-events-none h-4 w-4 shrink-0 text-gray-400" />
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-semibold text-slate-700">
                   Status Inicial
                 </label>
-                {/* <select
-                  name="status"
-                  value={formData.status}
-                  onChange={handleChange}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-600 focus:border-purple-500 focus:bg-white focus:outline-none"
-                >
-                  <option value='null'>Selecione</option>
-                  <option value="Pendente">Pendente</option>
-                  <option value="Pago">Pago</option>
-                  <option value="Vencido">Vencido</option>
-                </select> */}
                 <CustomSelect 
                     options={statusOptions}
                     selected={status}
