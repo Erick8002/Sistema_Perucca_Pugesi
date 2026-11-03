@@ -21,7 +21,7 @@ export default function CustomSelect({ options = [], selected, onSelect, current
   }, []);
 
   return (
-    <div ref={selectRef} className="relative w-52 text-sm">
+    <div ref={selectRef} className="relative min-w-44 w-fit text-sm">
       <button
         onClick={() => setIsOpen(!isOpen)}
         type="button"
