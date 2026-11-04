@@ -50,6 +50,16 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [installment, setInstallment] = useState("1");
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+      if (isOpen && selectedAccount) {
+        setAccount(selectedAccount);
+        setFormData((prev) => ({
+          ...prev,
+          account_id: selectedAccount.id || '',
+        }));
+      }
+    }, [isOpen, selectedAccount]);
     
     useEffect(() => {
       function handleClickOutside(event) {
@@ -201,19 +211,12 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
 
       setAttachedFiles((prev) => [...prev, ...newFiles]);
     };
-
-    const handleAccountChange = (selectedAccount) => {
-      setFormData((prev) => ({
-        ...prev,
-        account_id: selectedAccount.id,
-      }));
-    };
     
     const handleSubmit = async (e) => {
       e.preventDefault();
       setLoading(true);
 
-      if (!formData.fornecedor || !formData.valor || categoria === "Selecione" || !formData.account_id) {
+      if (!formData.fornecedor || !formData.valor || categoria === "Selecione" ) {
         alert('Por favor, preencha os campos obrigatórios.');
         setLoading(false)
         return;
