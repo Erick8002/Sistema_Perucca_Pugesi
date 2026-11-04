@@ -461,6 +461,7 @@ router
     
     const { id } = req.params;
     const { 
+      account_id,
       due_date, 
       dataVencimento, 
       supplier, 
@@ -579,20 +580,22 @@ router
         `
         UPDATE transactions
         SET 
-          due_date = $1,
-          supplier = $2,
-          category = $3,
-          amount = $4,
-          status = $5,
-          nfe_url = $6,
-          xml_url = $7,
-          boleto_url = $8, 
-          receipt_url = $9,
-          descricao = CASE WHEN $10 THEN $11 ELSE descricao END
-        WHERE id = $12
+          account_id = $1,
+          due_date = $2,
+          supplier = $3,
+          category = $4,
+          amount = $5,
+          status = $6,
+          nfe_url = $7,
+          xml_url = $8,
+          boleto_url = $9, 
+          receipt_url = $10,
+          descricao = CASE WHEN $11 THEN $12 ELSE descricao END
+        WHERE id = $13
         RETURNING *;
         `, 
         [
+          account_id,
           finalDueDate, 
           finalSupplier, 
           finalCategory, 

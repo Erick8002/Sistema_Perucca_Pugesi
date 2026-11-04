@@ -54,7 +54,7 @@ export default function TransactionsTable({
 
   const isEditing = Boolean(editingTransaction?.id);
   const handleSaveTransaction = async (newTransaction) => {
-    if (!selectedAccount) {
+    if (!newTransaction.account_id) {
       alert("Selecione uma conta antes de criar uma transação.");
       return;
     }
@@ -87,7 +87,7 @@ export default function TransactionsTable({
       // });
 
       const payload = {
-        account_id: selectedAccount.id,
+        account_id: newTransaction.account_id,
         due_date: validDate,
         supplier: newTransaction.fornecedor,
         descricao: newTransaction.descricao?.trim() || null,
@@ -149,7 +149,7 @@ export default function TransactionsTable({
 
         const formatedTransactions = newItems.map((item) => ({
           id: item.id,
-          accountId: item.account_id || selectedAccount.id,
+          accountId: item.account_id,
           vencimento: item.due_date ? String(item.due_date).slice(0, 10) : validDate,
           fornecedor: item.supplier,
           descricao: item.descricao,

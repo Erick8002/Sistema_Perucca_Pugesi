@@ -53,7 +53,7 @@ export default function CustomSelect({ options = [], selected, onSelect, current
         className="flex w-full items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-gray-700 shadow-sm transition-all hover:border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500/20"
       >
         <div className="flex items-center gap-2 truncate">
-          <span className="truncate">{displaySelected}</span>
+          <span className="whitespace-normal break-words text-left">{displaySelected}</span>
 
           {isSelectedCurrent && (
             <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-px rounded font-semibold shrink-0">

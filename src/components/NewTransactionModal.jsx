@@ -31,8 +31,9 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
     );
+    const [account, setAccount] = useState( selectedAccount ||'Selecione')
     const initialFormState = {
-      account_id: selectedAccount?.id || '',
+      account_id: account.id || '',
       vencimento: '',
       fornecedor: '',
       descricao: '',
@@ -46,7 +47,6 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
     const [formData, setFormData] = useState(initialFormState);
     const [categoria, setCategoria] = useState('Selecione');
     const [status, setStatus] = useState('Selecione');
-    const [account, setAccount] = useState( selectedAccount?.name ||'Selecione')
     const [installment, setInstallment] = useState("1");
     const [attachedFiles, setAttachedFiles] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -213,7 +213,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       e.preventDefault();
       setLoading(true);
 
-      if (!formData.fornecedor || !formData.valor || categoria === "Selecione") {
+      if (!formData.fornecedor || !formData.valor || categoria === "Selecione" || !formData.account_id) {
         alert('Por favor, preencha os campos obrigatórios.');
         setLoading(false)
         return;
@@ -221,7 +221,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
 
       const parsedValue = parseCurrencyInput(formData.valor);
 
-      if (parsedValue <= 0) {
+      if (parsedValue < 0) {
         alert('Informe um valor válido maior que zero.');
         setLoading(false);
         return;
@@ -316,6 +316,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         const saved = await onSave({
           ...formData,
           ...uploadedUrls,
+          account_id: account.id,
           descricao: formData.descricao?.trim() || "",
           category_id: categoryIdToSend,
           categoria: categoria,
@@ -382,8 +383,14 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
               </label>
               <CustomSelect
                  options={accounts}
-                 selected={selectedAccount.name}
-                 onSelect={setAccount}
+                 selected={account}
+                 onSelect={(acc) => {
+                  setAccount(acc);
+                  setFormData((prev) => ({
+                    ...prev,
+                    account_id: acc.id
+                  }));
+                 }}
               />
             </div>
 
@@ -422,16 +429,6 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 <label className="block text-sm font-semibold text-slate-700">
                   Categoria
                 </label>
-                {/* <select
-                  value={categoria}
-                  onChange={(e) => setCategoria(e.target.value)}
-                  className="mt-1 w-full rounded-lg border border-slate-200 bg-slate-50/50 p-2.5 text-sm text-slate-800 placeholder-slate-400 focus:border-purple-500 focus:bg-white focus:outline-none"
-                > 
-                    <option value="null">Selecione</option>
-                    <option value="Sementes">Sementes</option>
-                    <option value="Fertilizantes">Fertilizantes</option>
-                    <option value="Defensivos">Defensivos</option>
-                </select> */}
                 <CustomSelect 
                     options={categories.map(cat => typeof cat === 'object' ? cat.name : cat)}
                     selected={categoria}
