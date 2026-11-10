@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { ChevronDown, Plus, X } from "lucide-react";
 
-export default function CustomSelect({ options = [], selected, onSelect, currentOption, onAddNew, addNewLabel = "Nova Opção", onDelete }) {
+export default function CustomSelect({ options = [], selected, onSelect, currentOption, onAddNew, addNewLabel = "Nova Opção", onDelete, canDeleteOption }) {
   const [isOpen, setIsOpen] = useState(false);
   const selectRef = useRef(null);
 
@@ -115,7 +115,7 @@ export default function CustomSelect({ options = [], selected, onSelect, current
                   )}
 
                   {/* Botão X para Excluir */}
-                  {onDelete && (
+                  {onDelete && (!canDeleteOption || canDeleteOption(option)) && (
                     <span
                       role="button"
                       tabIndex={0}

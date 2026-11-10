@@ -4,13 +4,14 @@ import CustomSelect from './CustomSelect';
 
 export default function Header({
   accounts = [],
+  allAccountsOption,
   selectedAccount,
   onAccountSelect,
   onAddAccount,
   handleDeleteAccount,
   onLogout,
 }) {
-  const accountOptions = accounts.map((account) => account.name);
+  const accountOptions = [allAccountsOption, ...accounts].filter(Boolean);
   const selectedName = selectedAccount?.name || 'Nenhuma conta encontrada';
 
   return (
@@ -40,11 +41,15 @@ export default function Header({
             <CustomSelect
               options={accountOptions}
               selected={selectedName}
-              onSelect={(name) => {
-                const account = accounts.find((item) => item.name === name);
+              onSelect={(account) => {
                 onAccountSelect(account);
               }}
-              onDelete={handleDeleteAccount}
+              onDelete={(event, account) => {
+                if (!account.isAllAccounts) {
+                  handleDeleteAccount(event, account.name);
+                }
+              }}
+              canDeleteOption={(account) => !account.isAllAccounts}
             />
           </div>
         </div>

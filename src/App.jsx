@@ -27,6 +27,12 @@ const monthOptions = [
   "Dezembro",
 ];
 
+const allAccountsOption = {
+  id: "__all_accounts__",
+  name: "Todas as contas",
+  isAllAccounts: true,
+};
+
 const parseCurrency = (valueString) => {
 
   if (!valueString) return 0;
@@ -60,7 +66,10 @@ export default function App() {
   const [isAddAccountModalOpen, setIsAddAccountModalOpen] = useState(false);
   const [selectedAccount, setSelectedAccount] = useState(() => {
     const savedAccount = localStorage.getItem('@finance:selectedAccount');
-    return savedAccount ? JSON.parse(savedAccount) : null;
+    if (!savedAccount) return null;
+
+    const parsedAccount = JSON.parse(savedAccount);
+    return parsedAccount.isAllAccounts ? allAccountsOption : parsedAccount;
   });
   const [transactions, setTransactions] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -68,7 +77,9 @@ export default function App() {
   const [categoria, setCategoria] = useState('Selecione');
   const [newCategoryName, setNewCategoryName] = useState("");
   const accountTransactions = transactions.filter(
-    (transaction) => transaction.accountId === selectedAccount?.id 
+    (transaction) =>
+      selectedAccount?.isAllAccounts ||
+        transaction.accountId === selectedAccount?.id
   );
   const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
@@ -121,6 +132,11 @@ export default function App() {
           
           if (savedAccount) {
             const parsedAccount = JSON.parse(savedAccount);
+            if (parsedAccount.isAllAccounts) {
+              setSelectedAccount(allAccountsOption);
+              return;
+            }
+
             // 2. Procura a conta salva na lista vinda do banco (pelo ID)
             const foundAccount = accountData.find((acc) => acc.id === parsedAccount.id);
 
@@ -419,6 +435,7 @@ export default function App() {
         <div className="mx-auto max-w-6xl space-y-6">
           <Header
             accounts={accounts}
+            allAccountsOption={allAccountsOption}
             selectedAccount={selectedAccount}
             onAccountSelect={handleAccountSelect}
             onAddAccount={() => setIsAddAccountModalOpen(true)}
