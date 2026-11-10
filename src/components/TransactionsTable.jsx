@@ -282,6 +282,30 @@ export default function TransactionsTable({
     }
   }, [transactions, selectedTransaction]);
 
+  useEffect(() => {
+    const activeDate = startDate || endDate;
+    const activeStartDateMonth = startDate ? startDate.split("-")[1] : false;
+    const activeEndDateMonth = endDate ? endDate.split("-")[1] : false;
+
+    if (activeDate) {
+      const [, monthString] = activeDate.split("-");
+      const monthIndex = parseInt(monthString, 10);
+      const arrayMonthOptions = monthOptions[monthIndex];
+
+      if (activeStartDateMonth && activeEndDateMonth) {
+        if (activeStartDateMonth !== activeEndDateMonth) {
+          setMonthTableFilter(monthOptions[0]);
+        }
+      } else if (arrayMonthOptions && monthTableFilter !== arrayMonthOptions) {
+        setMonthTableFilter(arrayMonthOptions);
+      }
+    }
+  }, [startDate, endDate, monthTableFilter, monthOptions, setMonthTableFilter]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryTableHeader, monthTableFilter, startDate, endDate, searchTerm]);
+  
   const handleCloseDrawer = () => {
     setIsDrawerOpen(false);
   };
@@ -334,30 +358,6 @@ export default function TransactionsTable({
     return `${paidCountFallback}/${total}`;
   };
 
-  useEffect(() => {
-    const activeDate = startDate || endDate;
-    const activeStartDateMonth = startDate ? startDate.split("-")[1] : false;
-    const activeEndDateMonth = endDate ? endDate.split("-")[1] : false;
-
-    if (activeDate) {
-      const [, monthString] = activeDate.split("-");
-      const monthIndex = parseInt(monthString, 10);
-      const arrayMonthOptions = monthOptions[monthIndex];
-
-      if (activeStartDateMonth && activeEndDateMonth) {
-        if (activeStartDateMonth !== activeEndDateMonth) {
-          setMonthTableFilter(monthOptions[0]);
-        }
-      } else if (arrayMonthOptions && monthTableFilter !== arrayMonthOptions) {
-        setMonthTableFilter(arrayMonthOptions);
-      }
-    }
-  }, [startDate, endDate, monthTableFilter, monthOptions, setMonthTableFilter]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [categoryTableHeader, monthTableFilter, startDate, endDate, searchTerm]);
-
   const dataToFilter = Array.isArray(filterTransactions)
     ? filterTransactions
     : transactions;
@@ -403,6 +403,7 @@ export default function TransactionsTable({
   });
 
   const previousReportDataRef = useRef("");
+  
   useEffect(() => {
     if (!onFilteredDataChange) return;
 
