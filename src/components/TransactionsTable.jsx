@@ -397,7 +397,7 @@ export default function TransactionsTable({
     });
   };
 
-  const sortedTransactions = [...(dataToSort || [])].sort((b, a) => {
+  const sortedTransactions = [...(dataToSort || [])].sort((a, b) => {
     if (!a?.vencimento || !b?.vencimento) return 0;
     return a.vencimento.localeCompare(b.vencimento);
   });
@@ -445,8 +445,7 @@ export default function TransactionsTable({
   };
 
   const totalItems = sortedTransactions.length; // Pega a quantidade total de items que possui na tabela
-  const startItems =
-    totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1; // Serve para verificar quantas páginas inteiras já ficaram para trás, sempre retornando 1, 11, 21...
+  const startItems = totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1; // Serve para verificar quantas páginas inteiras já ficaram para trás, sempre retornando 1, 11, 21...
   const endItems = Math.min(currentPage * itemsPerPage, totalItems); // O Math.min compara o menor número entre os dois parâmetros dentro dele, se tornando uma "trava de segurança"
   const indexOfLastItem = currentPage * itemsPerPage; // Pega o índice do último item da página
   const indexOfFirstItem = indexOfLastItem - itemsPerPage; // Pega o índice do primeiro item da página
@@ -616,7 +615,9 @@ export default function TransactionsTable({
                   </td>
                 </tr>
               ) : (
-                currentTransactions.map((item) => {
+                currentTransactions
+                .sort((a, b) => new Date(a.vencimento) - new Date(b.vencimento))
+                .map((item) => {
                   const currentStatus = getTransactionStatus(item);
                   const isOverdue =
                     currentStatus === "Atrasado" || currentStatus === "Vencido";
