@@ -185,6 +185,7 @@ export default function App() {
           xml_url: t.xml_url,
           boleto_url: t.boleto_url,
           receipt_url: t.receipt_url,
+          created_at: t.created_at,
         }));
         console.log("Transações formatadas: ", formattedTransactions)
         setTransactions(formattedTransactions);

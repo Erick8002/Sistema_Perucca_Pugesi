@@ -152,6 +152,25 @@ export function TransactionDetailsDrawer({
                 </p>
               </div>
             </div>
+            <div className="flex items-center gap-3.5 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100/80">
+              <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-600">
+                <Clock className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Data de Criação</p>
+                <p className="text-sm font-medium text-gray-800">
+                  {transaction.created_at 
+                    ? new Date(transaction.created_at).toLocaleDateString('pt-BR', {
+                        day: '2-digit',
+                        month: '2-digit',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      }) 
+                    : 'Não informada'}
+                </p>
+              </div>
+            </div>
             <div className="rounded-xl border border-slate-100/80 p-3">
               <p className="text-xs text-slate-400">Descrição</p>
               <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-800">
