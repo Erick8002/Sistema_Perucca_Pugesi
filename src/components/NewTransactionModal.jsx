@@ -99,7 +99,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       console.log("2. Transação recebida no Modal:", editingTransaction);
       if (isEditing && editingTransaction) {
         setFormData({
-          account_id: editingTransaction.account_id || "",
+          account_id: editingTransaction.accountId || "",
           fornecedor: editingTransaction.fornecedor || "",
           descricao: editingTransaction.descricao || "",
           valor: editingTransaction.valor || "",
@@ -353,6 +353,9 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       }
     };
 
+    const selectedAccountObj = accounts.find((acc) => String(acc.id) === String(formData.account_id)) || null;
+    console.log("CONTA SELECIONADA: ", selectedAccountObj);
+
     if(!isOpen) return null;
     return (
       <>
@@ -386,7 +389,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
               </label>
               <CustomSelect
                  options={accounts}
-                 selected={account}
+                 selected={selectedAccountObj}
                  onSelect={(acc) => {
                   setAccount(acc);
                   setFormData((prev) => ({
