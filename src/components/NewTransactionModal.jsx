@@ -28,6 +28,7 @@ const parseCurrencyInput = (value) => {
 export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, statusOptions, editingTransaction, isEditing, setEditingTransaction, categories, setCategories, handleDeleteCategory, isCategoryModalOpen, setIsCategoryModalOpen, handleCreateCategory, newCategoryName, setNewCategoryName, api_url, selectedAccount, accounts = [] }) {
     const selectRef = useRef(null);
     const inputCalendarRef = useRef(null);
+    const paidAtCalendarRef = useRef(null);
     const transactionCategoryOptions = categoryOptions.filter(
       (category) => category !== "Todas as Categorias"
     );
@@ -42,7 +43,8 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
       status: '',
       installment: '1',
       group_id: '',
-      file: null
+      file: null,
+      paid_at: '',
     };
     const [formData, setFormData] = useState(initialFormState);
     const [categoria, setCategoria] = useState('Selecione');
@@ -318,6 +320,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
         const categoryIdToSend = selectedCategoryObject?.id || null;
 
         const saved = await onSave({
+          ...(editingTransaction || {}),
           ...formData,
           ...uploadedUrls,
           account_id: account.id,
@@ -326,6 +329,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           categoria: categoria,
           valor: parsedValue,
           status: status === 'Selecione' || !status ? "Pendente" : status,
+          paid_at: (status === "Pago" && formData.paid_at) ? formData.paid_at : null,
           installment: formData.installment || '1',
           group_id: formData.group_id
         });
@@ -495,6 +499,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                       const newStatus = typeof selectedOption === "string"
                         ? selectedOption
                         : selectedOption.id || selectedOption.name;
+                      setStatus(newStatus);
                       
                       setFormData((prev) => ({
                         ...prev,
@@ -537,14 +542,14 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                     Data do Pagamento
                   </label>
                     <div
-                    onClick={handleCalendarClick}
+                    onClick={() => paidAtCalendarRef.current?.showPicker()}
                     className="relative flex w-full cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-sm shadow-sm transition-all hover:border-gray-300 focus-within:ring-2 focus-within:ring-purple-500/20"
                   >
                     <input
-                      ref={inputCalendarRef}
+                      ref={paidAtCalendarRef}
                       type="date"
-                      name="vencimento"
-                      value={formData.vencimento || ""}
+                      name="paid_at"
+                      value={formData.paid_at || ""}
                       onChange={handleChange}
                       className="w-full cursor-pointer bg-transparent text-gray-600 outline-none text-xs sm:text-sm [&::-webkit-calendar-picker-indicator]:hidden"
                     />

@@ -120,7 +120,7 @@ router.get("/", async (req, res) => {
                 t.xml_url,
                 t.boleto_url,
                 t.receipt_url,
-                t.paid_at,
+                t.paid_at
             FROM accounts a
             JOIN transactions t
             ON t.account_id = a.id
@@ -479,7 +479,8 @@ router
       nfe_url,
       xml_url,
       boleto_url,
-      receipt_url
+      receipt_url,
+      paid_at
     } = req.body;
 
     if (descricao !== undefined && descricao !== null && typeof descricao !== "string") {
@@ -594,8 +595,9 @@ router
           xml_url = $8,
           boleto_url = $9, 
           receipt_url = $10,
-          descricao = CASE WHEN $11 THEN $12 ELSE descricao END
-        WHERE id = $13
+          paid_at = $11,
+          descricao = CASE WHEN $12 THEN $13 ELSE descricao END
+        WHERE id = $14
         RETURNING *;
         `, 
         [
@@ -608,7 +610,8 @@ router
           finalNfeUrl, 
           finalXmlUrl, 
           finalBoletoUrl, 
-          finalReceiptUrl, 
+          finalReceiptUrl,
+          paid_at,
           descricao !== undefined,
           descricao ?? null,
           numericId

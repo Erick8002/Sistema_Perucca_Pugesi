@@ -133,6 +133,8 @@ export default function TransactionsTable({
         category_id: responseData.category_id,
         valor: Number(responseData.amount),
         status: responseData.status,
+        paid_at: responseData.paid_at ? String(responseData.paid_at).slice(0, 10) : null,
+        created_at: responseData.created_at,
         current_installment: responseData.current_installment,
         total_installment: responseData.total_installment,
         group_id: responseData.group_id,
