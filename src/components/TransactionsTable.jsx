@@ -160,6 +160,7 @@ export default function TransactionsTable({
           category_id: item.category_id,
           valor: Number(item.amount),
           status: item.status,
+          paid_at: item.paid_at,
           current_installment: item.current_installment,
           total_installment: item.total_installment,
           group_id: item.group_id,

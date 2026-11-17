@@ -178,6 +178,7 @@ export default function App() {
           categoria: t.categoria,
           valor: t.valor,
           status: t.status,
+          paid_at: t.paid_at ? String(t.paid_at).slice(0, 10) : null,
           current_installment: t.current_installment,
           total_installment: t.total_installment,
           group_id: t.group_id,
