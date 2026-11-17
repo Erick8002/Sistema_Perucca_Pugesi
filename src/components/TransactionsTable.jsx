@@ -99,7 +99,8 @@ export default function TransactionsTable({
         nfe_url: newTransaction.nfe_url || null,
         xml_url: newTransaction.xml_url || null,
         boleto_url: newTransaction.boleto_url || null,
-        receipt_url: newTransaction.receipt_url || null
+        receipt_url: newTransaction.receipt_url || null,
+        paid_at: newTransaction.paid_at || null
       }
       console.log("Payload enviado para API: ", payload);
       console.log("URL: ", url);

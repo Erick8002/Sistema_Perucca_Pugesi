@@ -152,6 +152,7 @@ export function TransactionDetailsDrawer({
                 </p>
               </div>
             </div>
+
             <div className="flex items-center gap-3.5 p-3 rounded-xl hover:bg-slate-50 transition-colors border border-slate-100/80">
               <div className="p-2.5 rounded-lg bg-indigo-50 text-indigo-600">
                 <Clock className="w-4 h-4" />
@@ -171,6 +172,23 @@ export function TransactionDetailsDrawer({
                 </p>
               </div>
             </div>
+
+            {currentStatus === "Pago" && transaction.paid_at && (
+              <div className="flex items-center gap-3 p-3 bg-emerald-50 dark:bg-emerald-950/40 rounded-xl border border-emerald-100 dark:border-emerald-900/50">
+                <div className="p-2 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">Data do Pagamento</p>
+                  <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
+                    {new Date(transaction.paid_at + 'T00:00:00').toLocaleDateString('pt-BR')}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="rounded-xl border border-slate-100/80 p-3">
               <p className="text-xs text-slate-400">Descrição</p>
               <p className="mt-1 whitespace-pre-wrap text-sm font-medium text-slate-800">

@@ -106,6 +106,7 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
           vencimento: editingTransaction.vencimento || "",
           status: editingTransaction.status || "Pendente",
           installment: editingTransaction.total_installment || 1,
+          paid_at: editingTransaction.paid_at ? editingTransaction.paid_at.split('T')[0] : "",
         });
 
         setCategoria(editingTransaction.categoria);
@@ -490,9 +491,22 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                 <CustomSelect 
                     options={statusOptions}
                     selected={status}
-                    onSelect={setStatus}
+                    onSelect={(selectedOption) => {
+                      const newStatus = typeof selectedOption === "string"
+                        ? selectedOption
+                        : selectedOption.id || selectedOption.name;
+                      
+                      setFormData((prev) => ({
+                        ...prev,
+                        status: newStatus,
+                        paid_at: newStatus === "Pago" && !prev.paid_at
+                          ? new Date().toISOString().split("T")[0]
+                          : prev.paid_at,
+                      }));
+                    }}
                   />
               </div>
+
               <div className="flex flex-col gap-1.5">
                 <label className="text-xs font-medium text-slate-600">Parcelas</label>
                 <input
@@ -515,6 +529,29 @@ export function NewTransactionModal({ isOpen, onClose, onSave, categoryOptions, 
                   className="w-full px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 text-sm"
                 />
               </div>
+
+              {/* Campo condicional: Aparece logo abaixo quando o status for "Pago" */}
+              {formData.status === "Pago" &&(
+                <div>
+                  <label className="block text-sm font-semibold text-slate-700">
+                    Data do Pagamento
+                  </label>
+                    <div
+                    onClick={handleCalendarClick}
+                    className="relative flex w-full cursor-pointer items-center justify-between rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-sm shadow-sm transition-all hover:border-gray-300 focus-within:ring-2 focus-within:ring-purple-500/20"
+                  >
+                    <input
+                      ref={inputCalendarRef}
+                      type="date"
+                      name="vencimento"
+                      value={formData.vencimento || ""}
+                      onChange={handleChange}
+                      className="w-full cursor-pointer bg-transparent text-gray-600 outline-none text-xs sm:text-sm [&::-webkit-calendar-picker-indicator]:hidden"
+                    />
+                    <Calendar className="pointer-events-none h-4 w-4 shrink-0 text-gray-400" />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Área de Upload de Comprovante */}
