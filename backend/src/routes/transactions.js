@@ -353,12 +353,12 @@ router
   .route("/:id")
   .patch(async (req, res) => {
     const id = parseInt(req.params.id, 10);
-    const { status } = req.body;
+    const { status, paid_at } = req.body;
 
     try {
       const result = await pool.query(
-        "UPDATE transactions SET status = $1 WHERE id = $2 RETURNING *",
-        [status, id]
+        "UPDATE transactions SET status = $1, paid_at = $2 WHERE id = $3 RETURNING *",
+        [status, paid_at, id]
       );
 
       if (result.rowCount === 0) {

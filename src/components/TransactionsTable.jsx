@@ -236,10 +236,14 @@ export default function TransactionsTable({
 
   const handleToggleStatus = async (transaction) => {
     const newStatus = transaction.status === "Pago" ? "Pendente" : "Pago";
+    const newPaidAt =
+      newStatus === "Pago" ? new Date().toLocaleDateString("en-CA") : null;
 
     setTransactions((prevTransactions) =>
       prevTransactions.map((item) =>
-        item.id === transaction.id ? { ...item, status: newStatus } : item,
+        item.id === transaction.id 
+          ? { ...item, status: newStatus, paid_at: newPaidAt } 
+          : item,
       ),
     );
 
@@ -251,7 +255,10 @@ export default function TransactionsTable({
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ status: newStatus }),
+          body: JSON.stringify({ 
+            status: newStatus,
+            paid_at: newPaidAt
+          }),
         },
       );
 
@@ -263,7 +270,13 @@ export default function TransactionsTable({
 
       setTransactions((prevTransactions) =>
         prevTransactions.map((item) =>
-          item.id === transaction.id ? { ...item, status: newStatus } : item,
+          item.id === transaction.id 
+            ? { 
+                ...item, 
+                status: transaction.status,
+                paid_at: transaction.paid_at
+              } 
+            : item,
         ),
       );
     }
